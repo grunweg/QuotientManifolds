@@ -99,6 +99,14 @@ variable {𝕜 : Type*} [NontriviallyNormedField 𝕜]
   {N : Type*} [TopologicalSpace N] [ChartedSpace G N]
   [IsManifold J n N]
 
+-- Here's how to access the atlas at a point.
+#check atlas H M
+
+-- The preferred chart at x.
+variable {x : M} in
+#check chartAt H x
+
+
 -- Differentiability, continuous differentiability etc. all have analogues for manifolds.
 variable {f : M → N} {s : Set M} {x : M}
 
