@@ -39,3 +39,20 @@ def myFirstLocalHomeo : OpenPartialHomeomorph ℝ ℝ where
   open_target := sorry
   continuousOn_toFun := sorry
   continuousOn_invFun := sorry
+
+
+-- Let's prove that the real numbers are a smooth manifold,
+-- with just one chart. This is the chart we want to define.
+def identityMap : OpenPartialHomeomorph ℝ ℝ :=
+  (Homeomorph.refl ℝ).toOpenPartialHomeomorph
+
+-- Here's the atlas on one chart.
+instance : ChartedSpace ℝ ℝ where
+  atlas := {identityMap}
+  chartAt := sorry
+  mem_chart_source := sorry
+  chart_mem_atlas := sorry
+
+-- Prove that makes ℝ into a smooth manifold.
+instance : IsManifold 𝓘(ℝ) n  ℝ where
+  compatible := by sorry
