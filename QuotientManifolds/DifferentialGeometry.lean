@@ -104,6 +104,9 @@ variable {f : M → N} {s : Set M} {x : M}
 
 -- `f` is `C^n`
 #check ContMDiff I J n f
+-- Equivalently, you can write the following:
+-- note that you don't need to specify the model with corners any more.
+#check CMDiff n f
 
 -- `f` is `C^n` at `x`
 #check ContMDiffAt I J n f x
