@@ -61,10 +61,28 @@ lemma isLocalHomeomorph : IsLocalHomeomorph (Quotient.mk _ : M → OrbitSpace M 
   isCoveringMap_quotientMk.isLocalHomeomorph
 
 variable (G) in
-def localInverseAt (p : M) : OpenPartialHomeomorph (OrbitSpace M G) M := by
-  -- have := isLocalHomeomorph (G := G) (M := M)
-  choose e hpe he using (isLocalHomeomorph (G := G) (M := M)) p
-  exact e.symm
+def aux (p : M) : OpenPartialHomeomorph M (OrbitSpace M G) :=
+  Classical.choose (isLocalHomeomorph (G := G) (M := M) p)
+
+variable (G) in
+lemma aux_prop (p : M) : p ∈ (aux G p).source :=
+  (Classical.choose_spec (isLocalHomeomorph (G := G) (M := M) p)).1
+
+variable (G) in
+lemma aux_eq (p : M) : aux G p = (Quotient.mk _ : M → (OrbitSpace M G)) :=
+  (Classical.choose_spec (isLocalHomeomorph (G := G) (M := M) p)).2.symm
+
+lemma mem_aux_target (p : M) : ⟦p⟧ ∈ (aux G p).target := by
+  rw [← OpenPartialHomeomorph.image_source_eq_target, Set.mem_image]
+  use p
+  refine ⟨aux_prop G p, ?_⟩
+  sorry
+
+variable (G) in
+def localInverseAt (p : M) : OpenPartialHomeomorph (OrbitSpace M G) M := (aux G p).symm
+
+lemma foo (p : M) : (Quotient.mk _ p) ∈ (localInverseAt G p).source := by
+  sorry
 
 end prerequisites
 
