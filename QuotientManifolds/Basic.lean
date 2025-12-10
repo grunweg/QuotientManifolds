@@ -76,13 +76,58 @@ noncomputable def myChartAt (q : OrbitSpace M G) : OpenPartialHomeomorph (OrbitS
   let p := q.out
   (localInverseAt G p).trans (chartAt H p)
 
+#check atlas H M
+variable (p : M)
+#check mem_chart_source H p
+
 -- Need to prove some well-definedness, and use the condition on the group action.
 
+lemma my_lema : ∀ q : OrbitSpace M G,
+  (Quotient.mk _) (Quotient.out q) = q := fun q ↦ Quotient.out_eq q
+
+open Function
+
+lemma req : ∀ q : OrbitSpace M G, (localInverseAt G (Quotient.out q)) q = Quotient.out q := by
+
+  intro q
+  by_contra c
+
+  have pi_p := (localInverseAt G (Quotient.out q)).invFun
+  have aux : Injective pi_p := by sorry
+  have h' : ¬ pi_p ((localInverseAt G (Quotient.out q)) q) = pi_p (Quotient.out q)
+    := by exact fun a ↦ c (aux a)
+
+  have aux2 : pi_p ((localInverseAt G (Quotient.out q)) q) = q := by sorry
+
+  have aux3 : pi_p (Quotient.out q) = Quotient.mk _ (Quotient.out q) := by sorry
+
+  rw [aux2] at h'
+  have h'' := my_lema q
+
+  rw [← aux3] at h''
+  rw [h''] at h'
+  simp at h'
+
+
+
 instance : ChartedSpace H (OrbitSpace M G) where
-  atlas := sorry
-  chartAt := sorry
-  mem_chart_source := sorry
-  chart_mem_atlas := sorry
+  atlas := {myChartAt p | p : OrbitSpace M G}
+  chartAt := myChartAt
+  mem_chart_source := by
+    intro q -- q = [p]
+    unfold myChartAt
+    simp
+    constructor
+    · -- q ∈ U
+
+      sorry
+    · -- π-1(q) ∈ s_g
+      have h1 := mem_chart_source H ((localInverseAt G (Quotient.out q)) q)
+      rw [req q] at h1 ⊢
+      exact h1
+  chart_mem_atlas := by
+    intro p
+    use p
 
 -- And let's prove that it's a manifold.
 instance : IsManifold I n (OrbitSpace M G) := sorry
