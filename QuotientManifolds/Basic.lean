@@ -1,5 +1,11 @@
 import Mathlib.Geometry.Manifold.Diffeomorph
 import Mathlib.Topology.Algebra.ProperAction.ProperlyDiscontinuous
+import Mathlib.Topology.IsLocalHomeomorph
+import Mathlib.Topology.Covering
+
+open Topology Manifold
+
+noncomputable section
 
 -- See `DifferentialGeometry.lean` for a quick overview to differential geometry in Lean.
 
@@ -20,10 +26,55 @@ abbrev OrbitSpace := MulAction.orbitRel.Quotient G M
 -- This is the quotient map from `M` to the orbit space `M / G`.
 example : M → OrbitSpace M G := Quotient.mk _
 
--- Mathlib already knows this is a topological space.
+section prerequisites
+
+-- Mathlib already knows this is a topological space,
 example : TopologicalSpace (OrbitSpace M G) := by infer_instance
 
+-- and that the quotient map is continuous.
+example : Continuous (Quotient.mk _ : M → (OrbitSpace M G)) := { isOpen_preimage := fun _s a ↦ a }
+
+omit [ProperlyDiscontinuousSMul G M] in
+example : IsQuotientMap (Quotient.mk _ : M → OrbitSpace M G) := isQuotientMap_quotient_mk'
+
+variable [ContinuousConstSMul G M]
+omit [ProperlyDiscontinuousSMul G M] in
+example : IsOpenQuotientMap (Quotient.mk _ : M → OrbitSpace M G) :=
+  MulAction.isOpenQuotientMap_quotientMk
+
+open Pointwise
+
+-- TODO: give this a proper name!
+-- This follows from mathlib's definition of a properly discontinuous action.
+-- No need to work on this; it's proven in mathlib PR #7596.
+variable (G) in
+lemma baz (p : M) :
+    ∃ (U : Set M), IsOpen U ∧ p ∈ U ∧ ∀ g h : G, g • U ≠ h • U → Disjoint (g • U) (h • U)  := by
+  sorry
+
+-- This follows from mathlib's definition of a properly discontinuous action.
+-- No need to work on this; it's proven in mathlib PR #7596.
+lemma isCoveringMap_quotientMk : IsCoveringMap (Quotient.mk _ : M → OrbitSpace M G) := by
+  sorry -- use `baz`
+
+lemma isLocalHomeomorph : IsLocalHomeomorph (Quotient.mk _ : M → OrbitSpace M G) :=
+  isCoveringMap_quotientMk.isLocalHomeomorph
+
+variable (G) in
+def localInverseAt (p : M) : OpenPartialHomeomorph (OrbitSpace M G) M := by
+  -- have := isLocalHomeomorph (G := G) (M := M)
+  choose e hpe he using (isLocalHomeomorph (G := G) (M := M)) p
+  exact e.symm
+
+end prerequisites
+
 -- Let's define a charted space structure on the quotient.
+
+variable [ContinuousConstSMul G M]
+
+noncomputable def myChartAt (q : OrbitSpace M G) : OpenPartialHomeomorph (OrbitSpace M G) H :=
+  let p := q.out
+  (localInverseAt G p).trans (chartAt H p)
 
 -- Need to prove some well-definedness, and use the condition on the group action.
 
