@@ -90,19 +90,16 @@ noncomputable def myChartAt (q : OrbitSpace M G) : OpenPartialHomeomorph (OrbitS
   let p := q.out
   (localInverseAt G p).trans (chartAt H p)
 
-open Function
-
 -- TO-DO : rename this
 lemma req' (p : M) (hq : ⟦p⟧ ∈ (localInverseAt G p).source) : (localInverseAt G p) ⟦p⟧ = p := by
   apply (aux G p).injOn ((localInverseAt G p).map_source hq) (aux_prop G p)
-  simp only [localInverseAt]
-  rw [(aux G p).right_inv  hq, aux_eq]
+  simp only [localInverseAt, (aux G p).right_inv hq, aux_eq]
 
 variable (G) in
 -- TO-DO : do we need this in addition to mem_aux_target?
 lemma another_req (p : M) : ⟦p⟧ ∈ (localInverseAt G p).source := by
   simp only [localInverseAt, OpenPartialHomeomorph.symm_source]
-  exact mem_aux_target (G := G) p
+  exact mem_aux_target p
 
 instance : ChartedSpace H (OrbitSpace M G) where
   atlas := {myChartAt p | p : OrbitSpace M G}
@@ -110,14 +107,8 @@ instance : ChartedSpace H (OrbitSpace M G) where
   mem_chart_source q := by
     simp [myChartAt]
     set p := q.out
-    refine ⟨?_, ?_⟩
-    · convert another_req G p
-      rw [q.out_eq]
-    convert mem_chart_source H p
-    convert req' (G := G) p
-    have : q = ⟦p⟧ := by rw [q.out_eq]
-    rw [this] --rw [← q.out_eq]
-    simp [another_req G p]
+    rw [← q.out_eq, req' p (another_req G p)]
+    exact ⟨another_req G p, mem_chart_source H p⟩
   chart_mem_atlas := by simp
 
 -- And let's prove that it's a manifold.
