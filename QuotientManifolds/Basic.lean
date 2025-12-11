@@ -80,6 +80,16 @@ lemma mem_aux_target (p : M) : ⟦p⟧ ∈ (aux G p).target := by
 variable (G) in
 def localInverseAt (p : M) : OpenPartialHomeomorph (OrbitSpace M G) M := (aux G p).symm
 
+lemma localInverseAt_apply_self {p : M} (hq : ⟦p⟧ ∈ (localInverseAt G p).source) :
+    (localInverseAt G p) ⟦p⟧ = p := by
+  apply (aux G p).injOn ((localInverseAt G p).map_source hq) (aux_prop G p)
+  simp only [localInverseAt, (aux G p).right_inv hq, aux_eq]
+
+variable (G) in -- XXX: is there a nice shorter name?
+lemma quotientMk_mem_localInverseAt_source {p : M} : ⟦p⟧ ∈ (localInverseAt G p).source := by
+  simp only [localInverseAt, OpenPartialHomeomorph.symm_source]
+  exact mem_aux_target p
+
 end prerequisites
 
 -- Let's define a charted space structure on the quotient.
@@ -87,18 +97,8 @@ end prerequisites
 variable [ContinuousConstSMul G M]
 
 noncomputable def myChartAt (q : OrbitSpace M G) : OpenPartialHomeomorph (OrbitSpace M G) H :=
-  let p := q.out
+  letI p := q.out
   (localInverseAt G p).trans (chartAt H p)
-
-lemma localInverseAt_apply_self (p : M) (hq : ⟦p⟧ ∈ (localInverseAt G p).source) :
-    (localInverseAt G p) ⟦p⟧ = p := by
-  apply (aux G p).injOn ((localInverseAt G p).map_source hq) (aux_prop G p)
-  simp only [localInverseAt, (aux G p).right_inv hq, aux_eq]
-
-variable (G) in -- XXX: is there a nice shorter name?
-lemma quotientMk_mem_localInverseAt_source (p : M) : ⟦p⟧ ∈ (localInverseAt G p).source := by
-  simp only [localInverseAt, OpenPartialHomeomorph.symm_source]
-  exact mem_aux_target p
 
 instance : ChartedSpace H (OrbitSpace M G) where
   atlas := {myChartAt p | p : OrbitSpace M G}
@@ -106,8 +106,8 @@ instance : ChartedSpace H (OrbitSpace M G) where
   mem_chart_source q := by
     simp [myChartAt]
     set p := q.out
-    rw [← q.out_eq, localInverseAt_apply_self  p (quotientMk_mem_localInverseAt_source G p)]
-    exact ⟨quotientMk_mem_localInverseAt_source G p, mem_chart_source H p⟩
+    rw [← q.out_eq, localInverseAt_apply_self (quotientMk_mem_localInverseAt_source G)]
+    exact ⟨quotientMk_mem_localInverseAt_source G, mem_chart_source H p⟩
   chart_mem_atlas := by simp
 
 -- And let's prove that it's a manifold.
