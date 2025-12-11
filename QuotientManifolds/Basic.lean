@@ -61,28 +61,73 @@ lemma isLocalHomeomorph : IsLocalHomeomorph (Quotient.mk _ : M → OrbitSpace M 
   isCoveringMap_quotientMk.isLocalHomeomorph
 
 variable (G) in
-def localInverseAt (p : M) : OpenPartialHomeomorph (OrbitSpace M G) M := by
-  -- have := isLocalHomeomorph (G := G) (M := M)
-  choose e hpe he using (isLocalHomeomorph (G := G) (M := M)) p
-  exact e.symm
+def aux (p : M) : OpenPartialHomeomorph M (OrbitSpace M G) :=
+  Classical.choose (isLocalHomeomorph (G := G) (M := M) p)
+
+lemma aux_prop (p : M) : p ∈ (aux G p).source :=
+  (Classical.choose_spec (isLocalHomeomorph (G := G) (M := M) p)).1
+
+lemma aux_eq (p : M) : aux G p = (Quotient.mk _ : M → (OrbitSpace M G)) :=
+  (Classical.choose_spec (isLocalHomeomorph (G := G) (M := M) p)).2.symm
+
+lemma mem_aux_target (p : M) : ⟦p⟧ ∈ (aux G p).target := by
+  rw [← OpenPartialHomeomorph.image_source_eq_target, Set.mem_image]
+  use p
+  refine ⟨aux_prop p, ?_⟩
+  rw [aux_eq]
+
+variable (G) in
+def localInverseAt (p : M) : OpenPartialHomeomorph (OrbitSpace M G) M := (aux G p).symm
+
+lemma foo (p : M) : (Quotient.mk _ p) ∈ (localInverseAt G p).source := by
+  apply mem_aux_target
+
 
 end prerequisites
+
+
 
 -- Let's define a charted space structure on the quotient.
 
 variable [ContinuousConstSMul G M]
 
+-- lemma bar (p : M) : (aux G p).symm.toPartialEquiv = ((aux G p).toPartialEquiv).symm := by
+--   simp_all only [OpenPartialHomeomorph.symm_toPartialEquiv]
+
+
 noncomputable def myChartAt (q : OrbitSpace M G) : OpenPartialHomeomorph (OrbitSpace M G) H :=
   let p := q.out
+  /- choose an element of the equivlence class. For definitions we can do intermediate let
+  statements before just stating the definition we want. -/
   (localInverseAt G p).trans (chartAt H p)
 
 -- Need to prove some well-definedness, and use the condition on the group action.
 
+open Function
+
+
+lemma mem_aux_target' (p : OrbitSpace M G) : p ∈ (aux G (Quotient.out p)).target := by
+  rw [← OpenPartialHomeomorph.image_source_eq_target, Set.mem_image]
+  use Quotient.out p
+  refine ⟨aux_prop (Quotient.out p), ?_⟩
+  rw [aux_eq]
+  exact Quotient.out_eq p
+
 instance : ChartedSpace H (OrbitSpace M G) where
-  atlas := sorry
-  chartAt := sorry
-  mem_chart_source := sorry
-  chart_mem_atlas := sorry
+  atlas := {myChartAt x | x : OrbitSpace M G}
+  chartAt := fun x ↦ myChartAt x
+  mem_chart_source := by
+    intro p
+    simp only [myChartAt, OpenPartialHomeomorph.trans_toPartialEquiv, PartialEquiv.trans_source,
+      OpenPartialHomeomorph.toFun_eq_coe, Set.mem_inter_iff, Set.mem_preimage]
+    refine ⟨mem_aux_target' p, ?_⟩
+    sorry
+  chart_mem_atlas := by
+    intro x
+    use x
+
+
+
 
 -- And let's prove that it's a manifold.
 instance : IsManifold I n (OrbitSpace M G) := sorry
