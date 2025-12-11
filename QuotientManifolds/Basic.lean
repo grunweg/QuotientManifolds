@@ -100,17 +100,21 @@ variable (p : M)
 
 -- Need to prove some well-definedness, and use the condition on the group action.
 
+
+
+---- delete this
 lemma my_lema : ∀ q : OrbitSpace M G,
   (Quotient.mk _) (Quotient.out q) = q := fun q ↦ Quotient.out_eq q
 
 open Function
 
+--- old version -> delete this
 lemma req : ∀ q : OrbitSpace M G, (localInverseAt G (Quotient.out q)) q = Quotient.out q := by
 
   intro q
   by_contra c
 
-  have pi_p := (localInverseAt G (Quotient.out q)).invFun
+  have pi_p := (localInverseAt G (Quotient.out q)).symm
   have aux : Injective pi_p := by sorry
   have h' : ¬ pi_p ((localInverseAt G (Quotient.out q)) q) = pi_p (Quotient.out q)
     := by exact fun a ↦ c (aux a)
@@ -127,6 +131,46 @@ lemma req : ∀ q : OrbitSpace M G, (localInverseAt G (Quotient.out q)) q = Quot
   simp at h'
 
 
+-- TO-DO : rename this and simplify it
+lemma req' (q : OrbitSpace M G) (hq : q ∈ (localInverseAt G (Quotient.out q)).source) :
+ (localInverseAt G (Quotient.out q)) q = Quotient.out q := by
+
+  have auxh := (localInverseAt G (Quotient.out q)).symm.injOn
+  unfold Set.InjOn at auxh
+  have auxaux1 : Quotient.out q ∈ (localInverseAt G (Quotient.out q)).symm.source := by
+    · simp
+      apply aux_prop
+      -- this could be some `aux_symm_prop` ?
+  have auxaux2 : (localInverseAt G (Quotient.out q)) q ∈
+    (localInverseAt G (Quotient.out q)).symm.source := by
+    · simp
+      exact OpenPartialHomeomorph.map_source (localInverseAt G (Quotient.out q)) hq
+      --- think about what to do with this.
+
+  specialize auxh auxaux2 auxaux1
+  apply auxh
+
+  rw [OpenPartialHomeomorph.left_inv (localInverseAt G (Quotient.out q)) hq]
+
+  unfold localInverseAt
+  simp
+  rw [aux_eq]
+  simp
+
+-- TO-DO : rename this and simplify it (is this `mem_aux_target`?)
+lemma another_req {q : OrbitSpace M G} :
+  q ∈ (localInverseAt G (Quotient.out q)).source := by
+    unfold localInverseAt
+    simp
+    have h := aux_prop G (Quotient.out q)
+    have h' := aux_eq G (Quotient.out q)
+    have h'' := (aux G (Quotient.out q)).map_source'
+    specialize h'' h
+    simp at h''
+    rw [h'] at h''
+    simp at h''
+    exact h''
+
 
 instance : ChartedSpace H (OrbitSpace M G) where
   atlas := {myChartAt p | p : OrbitSpace M G}
@@ -137,11 +181,10 @@ instance : ChartedSpace H (OrbitSpace M G) where
     simp
     constructor
     · -- q ∈ U
-
-      sorry
+      exact another_req
     · -- π-1(q) ∈ s_g
       have h1 := mem_chart_source H ((localInverseAt G (Quotient.out q)) q)
-      rw [req q] at h1 ⊢
+      rw [req' q another_req] at h1 ⊢
       exact h1
   chart_mem_atlas := by
     intro p
