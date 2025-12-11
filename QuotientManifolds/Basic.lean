@@ -74,15 +74,11 @@ lemma aux_eq (p : M) : aux G p = (Quotient.mk _ : M → (OrbitSpace M G)) :=
 
 lemma mem_aux_target (p : M) : ⟦p⟧ ∈ (aux G p).target := by
   rw [← OpenPartialHomeomorph.image_source_eq_target, Set.mem_image]
-  use p
-  refine ⟨aux_prop G p, ?_⟩
-  sorry
+  refine ⟨p, aux_prop G p, ?_⟩
+  rw [aux_eq]
 
 variable (G) in
 def localInverseAt (p : M) : OpenPartialHomeomorph (OrbitSpace M G) M := (aux G p).symm
-
-lemma foo (p : M) : (Quotient.mk _ p) ∈ (localInverseAt G p).source := by
-  sorry
 
 end prerequisites
 
@@ -94,101 +90,35 @@ noncomputable def myChartAt (q : OrbitSpace M G) : OpenPartialHomeomorph (OrbitS
   let p := q.out
   (localInverseAt G p).trans (chartAt H p)
 
-#check atlas H M
-variable (p : M)
-#check mem_chart_source H p
-
--- Need to prove some well-definedness, and use the condition on the group action.
-
-
-
----- delete this
-lemma my_lema : ∀ q : OrbitSpace M G,
-  (Quotient.mk _) (Quotient.out q) = q := fun q ↦ Quotient.out_eq q
-
 open Function
 
---- old version -> delete this
-lemma req : ∀ q : OrbitSpace M G, (localInverseAt G (Quotient.out q)) q = Quotient.out q := by
+-- TO-DO : rename this
+lemma req' (p : M) (hq : ⟦p⟧ ∈ (localInverseAt G p).source) : (localInverseAt G p) ⟦p⟧ = p := by
+  apply (aux G p).injOn ((localInverseAt G p).map_source hq) (aux_prop G p)
+  simp only [localInverseAt]
+  rw [(aux G p).right_inv  hq, aux_eq]
 
-  intro q
-  by_contra c
-
-  have pi_p := (localInverseAt G (Quotient.out q)).symm
-  have aux : Injective pi_p := by sorry
-  have h' : ¬ pi_p ((localInverseAt G (Quotient.out q)) q) = pi_p (Quotient.out q)
-    := by exact fun a ↦ c (aux a)
-
-  have aux2 : pi_p ((localInverseAt G (Quotient.out q)) q) = q := by sorry
-
-  have aux3 : pi_p (Quotient.out q) = Quotient.mk _ (Quotient.out q) := by sorry
-
-  rw [aux2] at h'
-  have h'' := my_lema q
-
-  rw [← aux3] at h''
-  rw [h''] at h'
-  simp at h'
-
-
--- TO-DO : rename this and simplify it
-lemma req' (q : OrbitSpace M G) (hq : q ∈ (localInverseAt G (Quotient.out q)).source) :
- (localInverseAt G (Quotient.out q)) q = Quotient.out q := by
-
-  have auxh := (localInverseAt G (Quotient.out q)).symm.injOn
-  unfold Set.InjOn at auxh
-  have auxaux1 : Quotient.out q ∈ (localInverseAt G (Quotient.out q)).symm.source := by
-    · simp
-      apply aux_prop
-      -- this could be some `aux_symm_prop` ?
-  have auxaux2 : (localInverseAt G (Quotient.out q)) q ∈
-    (localInverseAt G (Quotient.out q)).symm.source := by
-    · simp
-      exact OpenPartialHomeomorph.map_source (localInverseAt G (Quotient.out q)) hq
-      --- think about what to do with this.
-
-  specialize auxh auxaux2 auxaux1
-  apply auxh
-
-  rw [OpenPartialHomeomorph.left_inv (localInverseAt G (Quotient.out q)) hq]
-
-  unfold localInverseAt
-  simp
-  rw [aux_eq]
-  simp
-
--- TO-DO : rename this and simplify it (is this `mem_aux_target`?)
-lemma another_req {q : OrbitSpace M G} :
-  q ∈ (localInverseAt G (Quotient.out q)).source := by
-    unfold localInverseAt
-    simp
-    have h := aux_prop G (Quotient.out q)
-    have h' := aux_eq G (Quotient.out q)
-    have h'' := (aux G (Quotient.out q)).map_source'
-    specialize h'' h
-    simp at h''
-    rw [h'] at h''
-    simp at h''
-    exact h''
-
+variable (G) in
+-- TO-DO : do we need this in addition to mem_aux_target?
+lemma another_req (p : M) : ⟦p⟧ ∈ (localInverseAt G p).source := by
+  simp only [localInverseAt, OpenPartialHomeomorph.symm_source]
+  exact mem_aux_target (G := G) p
 
 instance : ChartedSpace H (OrbitSpace M G) where
   atlas := {myChartAt p | p : OrbitSpace M G}
   chartAt := myChartAt
-  mem_chart_source := by
-    intro q -- q = [p]
-    unfold myChartAt
-    simp
-    constructor
-    · -- q ∈ U
-      exact another_req
-    · -- π-1(q) ∈ s_g
-      have h1 := mem_chart_source H ((localInverseAt G (Quotient.out q)) q)
-      rw [req' q another_req] at h1 ⊢
-      exact h1
-  chart_mem_atlas := by
-    intro p
-    use p
+  mem_chart_source q := by
+    simp [myChartAt]
+    set p := q.out
+    refine ⟨?_, ?_⟩
+    · convert another_req G p
+      rw [q.out_eq]
+    convert mem_chart_source H p
+    convert req' (G := G) p
+    have : q = ⟦p⟧ := by rw [q.out_eq]
+    rw [this] --rw [← q.out_eq]
+    simp [another_req G p]
+  chart_mem_atlas := by simp
 
 -- And let's prove that it's a manifold.
 instance : IsManifold I n (OrbitSpace M G) := sorry
