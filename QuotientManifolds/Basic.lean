@@ -85,10 +85,35 @@ lemma localInverseAt_apply_self {p : M} (hq : ⟦p⟧ ∈ (localInverseAt G p).s
   apply (aux G p).injOn ((localInverseAt G p).map_source hq) (aux_prop G p)
   simp only [localInverseAt, (aux G p).right_inv hq, aux_eq]
 
+--Given two points p and k in M s.t. k is in the domain of π_p and [k] is in the domain
+-- of (π_p)⁻¹, then (π_p)⁻¹([k]) = k.
+lemma localInverseAt_apply_other {p k : M} (hk : k ∈ (aux G p).source)
+    (hk' : ⟦k⟧ ∈ (localInverseAt G p).source) :
+    (localInverseAt G p) ⟦k⟧ = k := by
+  apply (aux G p).injOn
+  · simp only [localInverseAt] at hk' ⊢
+    exact OpenPartialHomeomorph.map_target (aux G p) hk'
+  · exact hk
+  · simp only [localInverseAt, (aux G p).right_inv hk', aux_eq]
+
+
 variable (G) in -- XXX: is there a nice shorter name?
 lemma quotientMk_mem_localInverseAt_source {p : M} : ⟦p⟧ ∈ (localInverseAt G p).source := by
   simp only [localInverseAt, OpenPartialHomeomorph.symm_source]
   exact mem_aux_target p
+
+--For every point k ∈ M s.t. k is in the domain of π_p and π_p'(k) is in the
+-- domain of(π_p)⁻¹ we have that ((π_p')⁻¹ ∘ π_p) (k) = k, for every p and p'
+-- where this makes sense.
+lemma trans_of_aux_and_localInverseAt_is_id_at_inter (p p' k : M) --provisional name
+    (h1 : k ∈ (aux G p).source)
+    (h2 : (aux G p') k ∈ (localInverseAt G p).source)
+    : ((aux G p').trans (localInverseAt G p)) k = k := by
+  simp [OpenPartialHomeomorph.coe_trans, aux_eq G p']
+  apply localInverseAt_apply_other (G := G) (p := p) (k := k)
+  · exact h1
+  rw [aux_eq G p'] at h2
+  exact h2
 
 end prerequisites
 
