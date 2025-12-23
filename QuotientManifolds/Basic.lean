@@ -136,7 +136,40 @@ instance : ChartedSpace H (OrbitSpace M G) where
   chart_mem_atlas := by simp
 
 -- And let's prove that it's a manifold.
-instance : IsManifold I n (OrbitSpace M G) := sorry
+instance : IsManifold I n (OrbitSpace M G) where
+  compatible {e e'} he he' := by
+    have a : ∃ (p : OrbitSpace M G) , e = myChartAt p := by
+      unfold instChartedSpaceOrbitSpace at he
+      grind only [usr Set.mem_setOf_eq]
+    have a' : ∃ (p' : OrbitSpace M G) , e' = myChartAt p' := by
+      unfold instChartedSpaceOrbitSpace at he'
+      grind only [usr Set.mem_setOf_eq]
+    let ⟨p,hp⟩ := a
+    let ⟨p',hp'⟩ := a'
+    rw [hp,hp',myChartAt,myChartAt]
+    simp [OpenPartialHomeomorph.trans_symm_eq_symm_trans_symm]
+    have aux1 : ((chartAt H (Quotient.out p)).symm ≫ₕ (localInverseAt G (Quotient.out p)).symm) ≫ₕ localInverseAt G (Quotient.out p') ≫ₕ chartAt H (Quotient.out p')
+    = (chartAt H (Quotient.out p)).symm ≫ₕ ((localInverseAt G (Quotient.out p)).symm ≫ₕ localInverseAt G (Quotient.out p')) ≫ₕ chartAt H (Quotient.out p') :=
+     by grind [OpenPartialHomeomorph.trans_assoc]
+    rw [aux1]
+    have aux2 : (localInverseAt G (Quotient.out p)).symm = aux G (Quotient.out p) := by simp [localInverseAt, OpenPartialHomeomorph.symm]
+    simp [aux2]
+    simp [localInverseAt]
+    let pp := aux G (Quotient.out p) ≫ₕ (aux G (Quotient.out p')).symm
+    -- fixme: this is indeed not what we need; we need (Quotient.out p).
+    -- But with (Quotient.out p) the result is actually false: the composition function
+    -- is not the identity but a differentiable function.
+    -- This should be a lemma that will be useful for `contMDiff_quotientMk` as well.
+    -- Then this goal should follow from the composition of differentiable functions.
+    have aux3 : ∀ (q : M), q ∈ (aux G (Quotient.out p')).source -> pp.toFun q = q := by
+      intro q hq
+      unfold pp
+      simp
+      rw [aux_eq G (Quotient.out p)]
+      rw [← aux_eq G (Quotient.out p')]
+      rw [OpenPartialHomeomorph.left_inv]
+      exact hq
+
 
 -- Once we have done this, let's prove that the projection map is smooth.
 lemma contMDiff_quotientMk : ContMDiff I I n (Quotient.mk _ : M → OrbitSpace M G) := by
