@@ -1,7 +1,7 @@
 import Mathlib.Geometry.Manifold.Diffeomorph
 import Mathlib.Topology.Algebra.ProperAction.ProperlyDiscontinuous
 import Mathlib.Topology.IsLocalHomeomorph
-import Mathlib.Topology.Covering
+import Mathlib.Topology.Covering.Quotient
 
 open Topology Manifold
 
@@ -38,24 +38,22 @@ omit [ProperlyDiscontinuousSMul G M] in
 example : IsQuotientMap (Quotient.mk _ : M → OrbitSpace M G) := isQuotientMap_quotient_mk'
 
 variable [ContinuousConstSMul G M]
+
 omit [ProperlyDiscontinuousSMul G M] in
 example : IsOpenQuotientMap (Quotient.mk _ : M → OrbitSpace M G) :=
   MulAction.isOpenQuotientMap_quotientMk
 
 open Pointwise
 
--- TODO: give this a proper name!
--- This follows from mathlib's definition of a properly discontinuous action.
--- No need to work on this; it's proven in mathlib PR #7596.
-variable (G) in
-lemma baz (p : M) :
-    ∃ (U : Set M), IsOpen U ∧ p ∈ U ∧ ∀ g h : G, g • U ≠ h • U → Disjoint (g • U) (h • U)  := by
-  sorry
+-- Assume G acts freely on M, and that M is Hausdorff and locally compact.
+-- (This follows from finite-dimensionality, hence is a harmless assumption to add.)
+variable [IsCancelSMul G M] [T2Space M] [LocallyCompactSpace M]
 
 -- This follows from mathlib's definition of a properly discontinuous action.
 -- No need to work on this; it's proven in mathlib PR #7596.
 lemma isCoveringMap_quotientMk : IsCoveringMap (Quotient.mk _ : M → OrbitSpace M G) := by
-  sorry -- use `baz`
+  apply IsQuotientCoveringMap.isCoveringMap (G := G)
+  exact isQuotientCoveringMap_quotientMk_of_properlyDiscontinuousSMul
 
 lemma isLocalHomeomorph : IsLocalHomeomorph (Quotient.mk _ : M → OrbitSpace M G) :=
   isCoveringMap_quotientMk.isLocalHomeomorph
@@ -117,7 +115,7 @@ end prerequisites
 
 -- Let's define a charted space structure on the quotient.
 
-variable [ContinuousConstSMul G M]
+variable [ContinuousConstSMul G M] [IsCancelSMul G M] [T2Space M] [LocallyCompactSpace M]
 
 noncomputable def myChartAt (q : OrbitSpace M G) : OpenPartialHomeomorph (OrbitSpace M G) H :=
   letI p := q.out
@@ -127,7 +125,8 @@ instance : ChartedSpace H (OrbitSpace M G) where
   atlas := {myChartAt p | p : OrbitSpace M G}
   chartAt := myChartAt
   mem_chart_source q := by
-    simp [myChartAt]
+    simp only [myChartAt, OpenPartialHomeomorph.trans_toPartialEquiv, PartialEquiv.trans_source,
+      OpenPartialHomeomorph.toFun_eq_coe, Set.mem_inter_iff, Set.mem_preimage]
     set p := q.out
     rw [← q.out_eq, localInverseAt_apply_self (quotientMk_mem_localInverseAt_source G)]
     exact ⟨quotientMk_mem_localInverseAt_source G, mem_chart_source H p⟩
