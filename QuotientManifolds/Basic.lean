@@ -102,18 +102,16 @@ lemma quotientMk_mem_localInverseAt_source {p : M} : ⟦p⟧ ∈ (localInverseAt
   simp only [localInverseAt, OpenPartialHomeomorph.symm_source]
   exact mem_aux_target p
 
---For every point k ∈ M s.t. k is in the domain of π_p and π_p'(k) is in the
+-- For every point `k ∈ M` s.t. k is in the domain of π_p and π_p'(k) is in the
 -- domain of(π_p)⁻¹ we have that ((π_p')⁻¹ ∘ π_p) (k) = k, for every p and p'
 -- where this makes sense.
-lemma trans_of_aux_and_localInverseAt_is_id_at_inter (p p' k : M) --provisional name
-    (h1 : k ∈ (aux G p).source)
-    (h2 : (aux G p') k ∈ (localInverseAt G p).source)
-    : ((aux G p').trans (localInverseAt G p)) k = k := by
-  simp [OpenPartialHomeomorph.coe_trans, aux_eq G p']
-  apply localInverseAt_apply_other (G := G) (p := p) (k := k)
-  · exact h1
-  rw [aux_eq G p'] at h2
-  exact h2
+lemma aux_trans_localInverseAt_eq {p p' k : M}
+    (h : k ∈ (aux G p).source)
+    (h' : (aux G p') k ∈ (localInverseAt G p).source) :
+    ((aux G p').trans (localInverseAt G p)) k = k := by
+  simp only [OpenPartialHomeomorph.coe_trans, aux_eq G p', Function.comp_apply]
+  apply localInverseAt_apply_other h
+  rwa [aux_eq G p'] at h'
 
 end prerequisites
 
