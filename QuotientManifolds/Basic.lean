@@ -360,16 +360,7 @@ example (p q : M) : (chartAt H p).symm ≫ₕ (chartAt H q) ∈ contDiffGroupoid
 
 lemma if_source_of_first_empty_then_composition_empty {α β χ : Type} (f : PartialEquiv α β)
   (g : PartialEquiv β χ) (h : f.source = ∅) : (f.trans g).source = ∅ := by
-
-  refine Set.eq_empty_of_forall_notMem ?_
-  intro z
-  by_contra c
-  obtain ⟨c1, c2⟩ := c
-  have aux'' : f.symm.target = f.source := by exact rfl
-  rw [aux'', h] at c1
-  exact c1
-
-
+  rw [PartialEquiv.trans_source, h, Set.empty_inter]
 
 lemma if_no_source_in_target_composition_empty {α β χ : Type} (f : PartialEquiv α β)
   (g : PartialEquiv β χ) (h : g.source ∩ f.target = ∅) : (f.trans g).source = ∅ := by
@@ -404,13 +395,7 @@ lemma if_source_of_first_empty_then_composition_empty_coerc
     [TopologicalSpace α] [TopologicalSpace β] [TopologicalSpace χ]
     (f : OpenPartialHomeomorph α β)
     (g : OpenPartialHomeomorph β χ) (h : f.source = ∅) : (f.trans g).source = ∅ := by
-  refine Set.eq_empty_of_forall_notMem ?_
-  intro z
-  by_contra c
-  obtain ⟨c1, c2⟩ := c
-  have aux'' : f.symm.target = f.source := by exact rfl
-  rw [aux'', h] at c1
-  exact c1
+  rw [OpenPartialHomeomorph.trans_source, h, Set.empty_inter]
 
 lemma if_source_of_second_empty_then_composition_empty_coerc
     {α : Type u} {β : Type v} {χ : Type w}
