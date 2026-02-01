@@ -329,18 +329,6 @@ lemma lemma3' {p p' : M}
     use (g0 h)⁻¹
 
 
--- this is something i found at leansearch but then
--- i couldnt find it here
-theorem IsManifold.mem_maximalAtlas_iff
-    {𝕜 : Type u_1} [NontriviallyNormedField 𝕜]
-    {E : Type u_2} [NormedAddCommGroup E] [NormedSpace 𝕜 E]
-    {H : Type u_3} [TopologicalSpace H]
-    {I : ModelWithCorners 𝕜 E H} {n : WithTop ℕ∞}
-    {M : Type u_4} [TopologicalSpace M] [ChartedSpace H M]
-    {e : OpenPartialHomeomorph M H} :
-    e ∈ maximalAtlas I n M
-      ↔ e ∈ StructureGroupoid.maximalAtlas M (contDiffGroupoid n I) := by sorry
-
 lemma give_this_a_name (x y : OrbitSpace M G) :
     (chartAt H (Quotient.out x)).symm ≫ₕ chartAt H (Quotient.out y) ∈ contDiffGroupoid (↑n) I := by
   refine IsManifold.compatible_of_mem_maximalAtlas ?_ ?_
@@ -349,38 +337,6 @@ lemma give_this_a_name (x y : OrbitSpace M G) :
   · -- φ' ∈ IsManifold.maximalAtlas I (↑n) M ?
     apply IsManifold.chart_mem_maximalAtlas
 
-
-
-
-
-example (x y : OrbitSpace M G) (p p' : M)
-    (hp : p = x.out) (hp' : p' = y.out)
-    (u u' : M)
-    (h : (aux G p) u = (aux G p') u')
-      -- basically h is saying that there is an intersection
-    :
-    (localInverseAt G (x.out)).symm ≫ₕ (localInverseAt G (y.out))
-      = fun m : M ↦ g0 h • m
-    := by
-  ext a
-  simp
-
-  set U := (aux G p).source
-  set U' := (aux G p').source
-  have h' := lemma3 G h U U'
-
-  -- π ( U ∩ g0⁻¹ (U') ) ∩ π ( U' ∩ g0 (U) ) =
-  -- = π ( g0 (U ∩ g0⁻¹ U') )
-
-
-
-
-
-
-
-
-
-  sorry
 
 
 
@@ -401,11 +357,6 @@ example (p q : M) : (chartAt H p).symm ≫ₕ (chartAt H q) ∈ contDiffGroupoid
 
   have manifold : IsManifold I (↑n) M := by (expose_names; exact inst_6)
   exact manifold.compatible hp hq
-
-
-example (q : OrbitSpace M G) :
-  (localInverseAt G (q.out)).symm = aux G q.out := by
-  exact rfl
 
 lemma if_source_of_first_empty_then_composition_empty {α β χ : Type} (f : PartialEquiv α β)
   (g : PartialEquiv β χ) (h : f.source = ∅) : (f.trans g).source = ∅ := by
