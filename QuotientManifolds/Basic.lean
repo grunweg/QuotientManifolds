@@ -212,6 +212,33 @@ lemma lemma2 {p p' : M}
     simp [hx]
     simp [← hy1']
 
+lemma lemma2' {p p' : M}
+    {u u' : M}
+    (h : (aux G p) u = (aux G p') u')
+    (U : Set M)
+    (U' : Set M)
+    : (fun x ↦ (g0 h)⁻¹ • x) '' (U' ∩ ((fun x ↦ g0 h • x) '' U))
+      =  (U ∩ ((fun x ↦ (g0 h)⁻¹ • x) '' U')) := by
+  ext x
+  constructor
+  <;> intro hx
+
+  · obtain ⟨y, hy1, hy2⟩ := hx
+    obtain ⟨hy1, hy1'⟩ := hy1
+    obtain ⟨z, hz1, hz2⟩ := hy1'
+    constructor
+    · simp [← hz2] at hy2
+      rw [← hy2]
+      exact hz1
+    · use y
+  · obtain ⟨hx, hx'⟩ := hx
+    obtain ⟨y, hy1, hy1'⟩ := hx'
+    use y
+    simp [hy1, hy1']
+    use x
+    simp [hx]
+    simp [← hy1']
+
 example {p p' : M}
     {u u' : M}
     (h : (aux G p) u = (aux G p') u')
@@ -268,6 +295,38 @@ lemma lemma3 {p p' : M}
     apply Eq.symm
     apply MulAction.orbitRel.Quotient.mem_orbit.mp
     use g0 h
+
+variable (G) in
+lemma lemma3' {p p' : M}
+    {u u' : M}
+    (h : (aux G p) u = (aux G p') u')
+    (U : Set M)
+    (U' : Set M)
+
+    : ((π (G:=G)) '' (U ∩ ((fun x ↦ (g0 h)⁻¹ • x) '' U')))
+      ∩ (π (G:=G)) '' (U' ∩ ((fun x ↦ g0 h • x) '' U)) =
+      (π (G:=G)) '' ((fun x ↦ (g0 h)⁻¹ • x) '' (U' ∩ ((fun x ↦ g0 h • x) '' U))) := by
+
+  rw [lemma2']
+  rw [Set.inter_eq_left]
+  simp
+  intro x ⟨hx, hx'⟩
+  obtain ⟨y, hy, hy'⟩ := hx'
+  simp at hy'
+
+  use y
+  constructor
+  · constructor
+    · exact hy
+    · use x
+      simp [hx]
+      rw [← hy']
+      nth_rw 1 [Eq.symm (DivisionMonoid.inv_inv (g0 h))]
+      exact inv_smul_smul (g0 h)⁻¹ y
+  · unfold π
+    apply Eq.symm
+    apply MulAction.orbitRel.Quotient.mem_orbit.mp
+    use (g0 h)⁻¹
 
 
 -- this is something i found at leansearch but then
@@ -453,11 +512,12 @@ lemma confused_on_how_to_use_this' (α : Type u)
     [TopologicalSpace α]
     (f g : OpenPartialHomeomorph H H)
     (hfg : f.EqOnSource g)
-    (hf :  f ∈ (contDiffPregroupoid (↑n) I).groupoid)
+    (hf : f ∈ (contDiffPregroupoid (↑n) I).groupoid)
     :
     g ∈ (contDiffPregroupoid (↑n) I).groupoid
     := by
   exact (StructureGroupoid.mem_iff_of_eqOnSource hfg).mp hf
+
 
 
 -- And let's prove that it's a manifold.
@@ -516,10 +576,14 @@ instance : IsManifold I n (OrbitSpace M G) where
     have lemma2 : ρ '' Up' = Uq' := by
       exact lemma2
 
+    have lemma2' : ρinv '' Uq' = Up' := by
+      exact lemma2' heq Up Uq
+
     have lemma3 : π (G := G) '' (Up') ∩ π '' (Uq') = π '' (ρ '' Up') :=
       by exact lemma3
 
-
+    have lemma3' : π (G := G) '' (Up') ∩ π '' (Uq') = π '' (ρinv '' Uq') :=
+      by exact lemma3' (G:=G) heq Up Uq
 
     use ((πinvx ≫ₕ φx) '' ((π (G := G) '' Up') ∩ (π (G := G) '' Uq')))
 
@@ -655,7 +719,7 @@ instance : IsManifold I n (OrbitSpace M G) where
       rw [IsOpen.interior_eq is_open_s]
       exact Set.inter_subset_right
 
-    have thisismissing :
+    have f_eq_φρφ :
       ∀ x ∈ (f.restr s).source, f x = φy (ρ (φx.symm x)) := by
       intro z hz
       apply f_source at hz
@@ -688,26 +752,148 @@ instance : IsManifold I n (OrbitSpace M G) where
       rw [hπy_source hu.left.left]
       rw [πinvy.right_inv hu.left.left]
 
+    have φρφ_source :
+      ((φx.symm.trans ((ρ.toOpenPartialHomeomorph (X := M) (Y := M)).trans φy)).restr s).source
+        ⊆ s := by
+      rw [OpenPartialHomeomorph.restr_source]
+      rw [IsOpen.interior_eq is_open_s]
+      exact Set.inter_subset_right
+
+    have φρφ_eq_f :
+      ∀ x ∈
+        ((φx.symm.trans ((ρ.toOpenPartialHomeomorph (X := M) (Y := M)).trans φy)).restr s).source,
+        f x = φy (ρ (φx.symm x)) := by
+      intro z hz
+      apply φρφ_source at hz
+      rw [s_def] at hz
+
+      rw [lemma3] at hz
+      simp at hz
+      obtain ⟨u, ⟨hu, hz⟩⟩ := hz
+      rw [← hz]
+      rw [f_def]
+      simp
+
+      rw [hz]
+
+      have hρu :  π (G := G) u = π (ρ u) := by
+          exact quotient_ignores_smul (g0 heq) u
+      rw [← hρu] at hz
+      rw [hπx_source hu.left.left] at hz
+      rw [πinvx.right_inv hu.left.left] at hz
+
+      have hz' : φx.symm z = u := by
+        rw [← hz, φx.left_inv hu.left.right]
+
+      rw [hz']
+      rw [← hπx_source hu.left.left]
+      rw [hρu]
+
+      apply Set.mem_image_of_mem (⇑ρ) at hu
+      rw [lemma2] at hu
+      rw [hπy_source hu.left.left]
+      rw [πinvy.right_inv hu.left.left]
+
+
+    have ρ_source := Homeomorph.toOpenPartialHomeomorph_source ρ
 
     have hfg : OpenPartialHomeomorph.EqOnSource
-      ((φx.symm.trans ((ρ.toOpenPartialHomeomorph (X := M) (Y := M)).trans φy)).restr s)
-      (f.restr s)
-      -- this isnt exactly right
-      := by sorry
+        ((φx.symm.trans ((ρ.toOpenPartialHomeomorph (X := M) (Y := M)).trans φy)).restr
+          (s ∩ f.source))
+        (f.restr s)
+        := by
+      constructor
+      · ext z
+        have auxiliar : IsOpen (s ∩ f.source) := by
+          refine IsOpen.inter is_open_s f.open_source
+        have s_prop : s = φx '' (Up') := by
+          rw [s_def]
+          have : (πinvx ≫ₕ φx) '' (π '' Up' ∩ π '' Uq') =
+          φx '' (πinvx '' (π '' Up' ∩ π '' Uq')) := by
+            simp [Set.image_image]
+          rw [this]
+          rw [lemma3']
+          rw [lemma2']
+          have : π '' (Up') = πinvx.symm '' (Up') := by
+            ext m
+            constructor
+            all_goals intro hm
+            all_goals obtain ⟨n, hn⟩ := hm
+            · use n
+              rw [hπx_source] at hn
+              · exact hn
+              exact hn.left.left.left
+            · use n
+              rw [hπx_source]
+              · exact hn
+              exact hn.left.left.left
+          rw [this]
+          have : πinvx '' (πinvx.symm '' Up') = Up' := by
+            ext m
+            constructor
+            all_goals intro hm
+            · obtain ⟨n, hn⟩ := hm
+              obtain ⟨l, ⟨hl1, hl2⟩⟩ := hn.left
+              rw [← hl2] at hn
+              rw [πinvx.right_inv hl1.left.left] at hn
+              rw [← hn.right]
+              exact hl1
+            · use πinvx.symm m
+              simp [πinvx.right_inv hm.left.left]
+              use m
+          rw [this]
+
+        constructor
+        all_goals intro hz
+        · obtain ⟨hz, hzs⟩ := hz
+          rw [IsOpen.interior_eq auxiliar] at hzs
+          simp [IsOpen.interior_eq is_open_s, hzs.left, hzs.right]
+
+        · obtain ⟨hz, hzs⟩ := hz
+          simp [hzs]
+          rw [IsOpen.interior_eq f.open_source]
+          simp [hz]
+          constructor
+          · obtain ⟨hz1, hz2⟩ := hz
+            exact hz1
+          · rw [IsOpen.interior_eq is_open_s] at hzs
+            rw [s_prop] at hzs
+            obtain ⟨r, hr⟩ := hzs
+            rw [← hr.right]
+            rw [φx.left_inv hr.left.left.right]
+            have : ρ r ∈ ρ '' (Up') := by
+              use r
+              exact ⟨hr.left, by rfl⟩
+            rw [lemma2] at this
+            exact this.left.right
+
+      · intro z hz
+        have hz := hz.right
+        have aux : IsOpen (s ∩ f.source) := by
+          refine IsOpen.inter is_open_s f.open_source
+        rw [IsOpen.interior_eq aux] at hz
+        have : z ∈ (f.restr s).source := by
+          constructor
+          · exact hz.right
+          · rw [IsOpen.interior_eq is_open_s]
+            exact hz.left
+        exact Eq.symm (f_eq_φρφ z this)
 
     apply confused_on_how_to_use_this' (α := H)
-      (f := ((φx.symm.trans ((ρ.toOpenPartialHomeomorph (X := M) (Y := M)).trans φy)).restr s))
+      (f := ((φx.symm.trans ((ρ.toOpenPartialHomeomorph (X := M) (Y := M)).trans φy)).restr
+        (s ∩ f.source)))
       (g := (f.restr s))
       (hfg := hfg)
+
+
+
+
 
     have aux1 : (φx.symm ≫ₕ φy).restr s ∈ (contDiffPregroupoid (↑n) I).groupoid := by sorry
 
     let help := IsManifold.toHasGroupoid (M:=M) (n:=n) (I:=I)
 
-    have aux2 : ρ.toOpenPartialHomeomorph ∈ contDiffGroupoid (↑n) I := by
-      sorry
-
-
+    --have aux2 : ρ.toOpenPartialHomeomorph ∈ contDiffGroupoid (↑n) I := by sorry
 
 
     constructor
