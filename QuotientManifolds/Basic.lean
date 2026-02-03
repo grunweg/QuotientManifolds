@@ -142,18 +142,15 @@ instance : ChartedSpace H (OrbitSpace M G) where
   chart_mem_atlas := by simp
 
 
-#check (MulAction G M)
-#check symm_trans_mem_contDiffGroupoid
+/-
+        EVERYTHING AFTER THIS NEEDS TO BE CLEANED UP
+-/
 
--- U_i is the source of some ϕ_i (same for j) ∈ atlas H M
 
-
--- Lemma 3.3. The overlap Uᵢ'' ∩ Uⱼ'' is exactly π(Uᵢ'.g0 = Uⱼ')
-
--- pi = Quotient.mk _
--- '' is simply π of ' -> (Uᵢ'' = π(Uᵢ')) i think
---
-
+/--
+If two elements are such that `p u = π_p' u'`,
+then they are related by `u' = g • u` for some `g ∈ G`.
+-/
 lemma lemma1
     {p p' : M}
     {u u' : M}
@@ -164,11 +161,22 @@ lemma lemma1
   rw [aux_eq G p, aux_eq G p'] at h
   exact h.symm
 
+
+/--
+If two elements are such that `p u = π_p' u'`,
+then they are related by `u' = g • u` for some `g ∈ G`.
+`g0` is such `g`.
+-/
 def g0 {p p' : M} -- this gives us the g0 that the paper talks about
     {u u' : M}
     (h : (aux G p) u = (aux G p') u') : G :=
   Classical.choose (lemma1 h)
 
+/--
+If two elements are such that `p u = π_p' u'`,
+then they are related by `u' = g • u` for some `g ∈ G`.
+If `g0` is chosen to be such `g`, then `u' = g0 • u`.
+-/
 lemma g0_prop {p p' : M}
     {u u' : M}
     (h : (aux G p) u = (aux G p') u')
@@ -182,88 +190,108 @@ carries the open set Ui' = Ui ∩ (Uj.g₀⁻¹) around ui
 onto the open set Uj' = Uj ∩ (Ui.g₀) around uj
 -/
 
+-- more general version
+-- TO-DO: write this with the proper variables and hypothesis for G and M
 
+omit [ProperlyDiscontinuousSMul G M] in
+lemma Homeomorph.smul_symm {g : G} :
+  (Homeomorph.smul g (α := M)).symm = (Homeomorph.smul g⁻¹) := by
+  exact Homeomorph.ext_iff.mpr (congrFun rfl)
 
+omit [ProperlyDiscontinuousSMul G M] in
+lemma Homeomorph.smul_image_inter_preimage
+    (g : G)
+    (U : Set M)
+    (U' : Set M)
+    : Homeomorph.smul g '' (U ∩ (Homeomorph.smul g⁻¹ '' U'))
+      = (Homeomorph.smul g '' U) ∩ U' := by
+  rw [← Homeomorph.smul_symm, Homeomorph.image_symm]
+  exact Set.image_inter_preimage (⇑(Homeomorph.smul g)) U U'
+
+/--
+For any two sets `U` and `V`,
+-/
 lemma lemma2 {p p' : M}
     {u u' : M}
     (h : (aux G p) u = (aux G p') u')
     (U : Set M)
     (U' : Set M)
-    : (fun x ↦ g0 h • x) '' (U ∩ ((fun x ↦ (g0 h)⁻¹ • x) '' U'))
-      = U' ∩ ((fun x ↦ g0 h • x) '' U) := by
-
-  ext x
-  constructor
-  <;> intro hx
-
-  · obtain ⟨y, hy1, hy2⟩ := hx
-    obtain ⟨hy1, hy1'⟩ := hy1
-    obtain ⟨z, hz1, hz2⟩ := hy1'
-    constructor
-    · simp [← hz2] at hy2
-      rw [← hy2]
-      exact hz1
-    · use y
-  · obtain ⟨hx, hx'⟩ := hx
-    obtain ⟨y, hy1, hy1'⟩ := hx'
-    use y
-    simp [hy1, hy1']
-    use x
-    simp [hx]
-    simp [← hy1']
+    : Homeomorph.smul (g0 h) '' (U ∩ (Homeomorph.smul (g0 h)⁻¹ '' U'))
+      = U' ∩ (Homeomorph.smul (g0 h) '' U) := by
+  nth_rw 2 [Set.inter_comm]
+  exact Homeomorph.smul_image_inter_preimage (g0 h) U U'
 
 lemma lemma2' {p p' : M}
     {u u' : M}
     (h : (aux G p) u = (aux G p') u')
     (U : Set M)
     (U' : Set M)
-    : (fun x ↦ (g0 h)⁻¹ • x) '' (U' ∩ ((fun x ↦ g0 h • x) '' U))
-      =  (U ∩ ((fun x ↦ (g0 h)⁻¹ • x) '' U')) := by
-  ext x
-  constructor
-  <;> intro hx
-
-  · obtain ⟨y, hy1, hy2⟩ := hx
-    obtain ⟨hy1, hy1'⟩ := hy1
-    obtain ⟨z, hz1, hz2⟩ := hy1'
-    constructor
-    · simp [← hz2] at hy2
-      rw [← hy2]
-      exact hz1
-    · use y
-  · obtain ⟨hx, hx'⟩ := hx
-    obtain ⟨y, hy1, hy1'⟩ := hx'
-    use y
-    simp [hy1, hy1']
-    use x
-    simp [hx]
-    simp [← hy1']
-
-example {p p' : M}
-    {u u' : M}
-    (h : (aux G p) u = (aux G p') u')
-    (U : Set M)
-    (hU : U = (aux G p).source)
-    (U' : Set M)
-    (hU' : U' = (aux G p').source)
-    : IsOpen ((fun x ↦ g0 h • x) '' (U ∩ ((fun x ↦ (g0 h)⁻¹ • x) '' U'))) := by
-  rw [lemma2]
-  refine IsOpen.inter ?_ ?_
-  · rw [hU']
-    exact (aux G p').open_source
-  · have h1 : IsOpen U := by rw [hU]; exact (aux G p).open_source
-    have h2 := isOpenMap_smul (g0 h) (α:=M)
-    exact h2 U h1
+    : Homeomorph.smul (g0 h)⁻¹ '' (U' ∩ (Homeomorph.smul (g0 h) '' U))
+      =  (U ∩ (Homeomorph.smul (g0 h)⁻¹ '' U')) := by
+  rw [← lemma2 h U U', ← Homeomorph.smul_symm, Homeomorph.image_symm, Homeomorph.preimage_image]
 
 -- i had to do this bc otherwise lemma3 wouldnt work??
 def π (p : M) : OrbitSpace M G := Quotient.mk _ p
 
-example {a : Type} (A B : Set a) (h : A ∩ B = B) : B ⊆ A := by exact Set.inter_eq_right.mp h
+omit [TopologicalSpace M] [ProperlyDiscontinuousSMul G M] [ContinuousConstSMul G M] in
+/--
+Applying the projection function to two elements that are
+related via the relation yields the same result, namely
+`π u = π (g • u)`.
+-/
+lemma quotient_ignores_smul (g : G) (u : M) : π (G := G) u = π (g • u) := by
+  exact Quotient.eq.mpr ⟨g⁻¹, (by exact inv_smul_smul g u)⟩
 
-example (x y : M) (h : x ∈ MulAction.orbit G y) :
-    π (G := G) x = π (G := G) y := by
-  unfold π
-  exact MulAction.orbitRel.Quotient.mem_orbit.mp h
+
+omit [ProperlyDiscontinuousSMul G M] in
+/--
+Applying the projection function to two sets that are
+related via the relation yields the same result, namely
+`π s = π (g • U)`.
+-/
+lemma quotient_ignores_smul_image (g : G) (U : Set M) : π (G := G) '' U = π '' (Homeomorph.smul g '' U) := by
+  ext u
+  constructor
+  · intro ⟨v, hv⟩
+    simp only [Homeomorph.smul_apply, Set.mem_image, exists_exists_and_eq_and]
+    use v
+    refine ⟨hv.left, ?_⟩
+    rw [← hv.right]
+    exact Eq.symm (quotient_ignores_smul g v)
+  · intro ⟨v, hv⟩
+    obtain ⟨u', hu'⟩ := hv.left
+    use u'
+    refine ⟨hu'.left, ?_⟩
+    rw [← hv.right, ← hu'.right, Homeomorph.smul_apply]
+    exact quotient_ignores_smul g u'
+
+
+omit [ProperlyDiscontinuousSMul G M] in
+/--
+For any group element `g : G` and any sets `U, U' ⊆ M`
+it holds that
+`π (U ∩ g⁻¹ • U') ∩ π (U' ∩ g • U) = π (g • (U ∩ g⁻¹ • U'))`.
+-/
+lemma quotient_image_smul_eq
+    (g : G)
+    (U : Set M)
+    (U' : Set M) :
+    ((π (G:=G)) '' (U ∩ (Homeomorph.smul g⁻¹ '' U')))
+      ∩ (π (G:=G)) '' (U' ∩ (Homeomorph.smul g '' U)) =
+      (π (G:=G)) '' (Homeomorph.smul g '' (U ∩ (Homeomorph.smul g⁻¹ '' U'))) := by
+  rw [Homeomorph.smul_image_inter_preimage]
+  nth_rw 4 [Set.inter_comm]
+  rw [Set.inter_eq_right]
+
+  intro x ⟨z, ⟨⟨hz, ⟨y, hy⟩⟩, hx⟩⟩
+  use y
+  refine ⟨⟨hy.left, ?_⟩, ?_⟩
+  · use z
+    refine ⟨hz, ?_⟩
+    rw [← hy.right]
+    simp only [Homeomorph.smul_apply, inv_smul_smul]
+  · rw [← hx, ← hy.right, Homeomorph.smul_apply]
+    exact quotient_ignores_smul g y
 
 variable (G) in
 lemma lemma3 {p p' : M}
@@ -272,29 +300,11 @@ lemma lemma3 {p p' : M}
     (U : Set M)
     (U' : Set M)
 
-    : ((π (G:=G)) '' (U ∩ ((fun x ↦ (g0 h)⁻¹ • x) '' U')))
-      ∩ (π (G:=G)) '' (U' ∩ ((fun x ↦ g0 h • x) '' U)) =
-      (π (G:=G)) '' ((fun x ↦ g0 h • x) '' (U ∩ ((fun x ↦ (g0 h)⁻¹ • x) '' U'))) := by
+    : ((π (G:=G)) '' (U ∩ (Homeomorph.smul (g0 h)⁻¹ '' U')))
+      ∩ (π (G:=G)) '' (U' ∩ (Homeomorph.smul (g0 h) '' U)) =
+      (π (G:=G)) '' (Homeomorph.smul (g0 h) '' (U ∩ (Homeomorph.smul (g0 h)⁻¹ '' U'))) := by
 
-  rw [lemma2]
-  rw [Set.inter_eq_right]
-  simp
-  intro x ⟨hx, hx'⟩
-  obtain ⟨y, hy, hy'⟩ := hx'
-  simp at hy'
-
-  use y
-  constructor
-  · constructor
-    · exact hy
-    · use x
-      simp [hx]
-      rw [← hy']
-      exact inv_smul_smul (g0 h) y
-  · unfold π
-    apply Eq.symm
-    apply MulAction.orbitRel.Quotient.mem_orbit.mp
-    use g0 h
+  exact quotient_image_smul_eq (g0 h) U U'
 
 variable (G) in
 lemma lemma3' {p p' : M}
@@ -303,41 +313,22 @@ lemma lemma3' {p p' : M}
     (U : Set M)
     (U' : Set M)
 
-    : ((π (G:=G)) '' (U ∩ ((fun x ↦ (g0 h)⁻¹ • x) '' U')))
-      ∩ (π (G:=G)) '' (U' ∩ ((fun x ↦ g0 h • x) '' U)) =
-      (π (G:=G)) '' ((fun x ↦ (g0 h)⁻¹ • x) '' (U' ∩ ((fun x ↦ g0 h • x) '' U))) := by
-
-  rw [lemma2']
-  rw [Set.inter_eq_left]
-  simp
-  intro x ⟨hx, hx'⟩
-  obtain ⟨y, hy, hy'⟩ := hx'
-  simp at hy'
-
-  use y
-  constructor
-  · constructor
-    · exact hy
-    · use x
-      simp [hx]
-      rw [← hy']
-      nth_rw 1 [Eq.symm (DivisionMonoid.inv_inv (g0 h))]
-      exact inv_smul_smul (g0 h)⁻¹ y
-  · unfold π
-    apply Eq.symm
-    apply MulAction.orbitRel.Quotient.mem_orbit.mp
-    use (g0 h)⁻¹
+    : ((π (G:=G)) '' (U ∩ (Homeomorph.smul (g0 h)⁻¹ '' U')))
+      ∩ (π (G:=G)) '' (U' ∩ (Homeomorph.smul (g0 h) '' U)) =
+      (π (G:=G)) '' (Homeomorph.smul (g0 h)⁻¹ '' (U' ∩ (Homeomorph.smul (g0 h) '' U))) := by
+  rw [lemma3, lemma2]
+  set A := U ∩ ⇑(Homeomorph.smul (g0 h)⁻¹) '' U'
+  set B := U' ∩ ⇑(Homeomorph.smul (g0 h)) '' U
+  exact quotient_ignores_smul_image (g0 h)⁻¹ B
 
 
-lemma give_this_a_name (x y : OrbitSpace M G) :
+example (x y : OrbitSpace M G) :
     (chartAt H (Quotient.out x)).symm ≫ₕ chartAt H (Quotient.out y) ∈ contDiffGroupoid (↑n) I := by
   refine IsManifold.compatible_of_mem_maximalAtlas ?_ ?_
   · -- φ ∈ IsManifold.maximalAtlas I (↑n) M ?
     apply IsManifold.chart_mem_maximalAtlas
   · -- φ' ∈ IsManifold.maximalAtlas I (↑n) M ?
     apply IsManifold.chart_mem_maximalAtlas
-
-
 
 
 /-- Note: we have this instance
@@ -415,23 +406,9 @@ lemma if_source_of_second_empty_then_composition_empty_coerc
 #check OpenPartialHomeomorph.isOpen_image_of_subset_source
 
 lemma Set.inter_subset_if_left_subset {u} (A B C : Set u) (h : A ⊆ C) : A ∩ B ⊆ C := by
-  trans A
-  · exact Set.inter_subset_left
-  exact h
-
-lemma quotient_ignores_smul (g : G) (u : M) : π (G := G) u = π (g • u) := by
-  unfold π
-  apply Quotient.eq.mpr
-  exact ⟨g⁻¹, (by exact inv_smul_smul g u)⟩
+  exact fun ⦃a⦄ a_1 ↦ h (Set.inter_subset_left a_1)
 
 
-
-example (α β : Type u)
-    [TopologicalSpace α]
-    [TopologicalSpace β]
-    (f g : OpenPartialHomeomorph α β)
-    (h1 : f.source = g.source)
-    (h2 : ∀ x ∈ f.source, f x = g x) : OpenPartialHomeomorph.EqOnSource f g := by exact ⟨h1, h2⟩
 
 
 lemma confused_on_how_to_use_this (α : Type u)
