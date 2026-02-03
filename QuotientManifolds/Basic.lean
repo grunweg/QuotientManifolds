@@ -349,66 +349,10 @@ example (p q : M) : (chartAt H p).symm ≫ₕ (chartAt H q) ∈ contDiffGroupoid
   have manifold : IsManifold I (↑n) M := by (expose_names; exact inst_6)
   exact manifold.compatible hp hq
 
-lemma if_source_of_first_empty_then_composition_empty {α β χ : Type} (f : PartialEquiv α β)
-  (g : PartialEquiv β χ) (h : f.source = ∅) : (f.trans g).source = ∅ := by
-  rw [PartialEquiv.trans_source, h, Set.empty_inter]
 
-lemma if_no_source_in_target_composition_empty {α β χ : Type} (f : PartialEquiv α β)
-  (g : PartialEquiv β χ) (h : g.source ∩ f.target = ∅) : (f.trans g).source = ∅ := by
-  refine Set.eq_empty_of_forall_notMem ?_
-  intro z
-  by_contra c
-  obtain ⟨c1, c2⟩ := c
-  rw [← Set.not_nonempty_iff_eq_empty, Set.inter_comm] at h
-  unfold Set.Nonempty at h
-  simp at h
-  specialize h (f z) (PartialEquiv.map_source f c1)
-  exact h c2
-
-
-lemma if_no_source_in_target_composition_empty_coerc
-    {α : Type u} {β : Type v} {χ : Type w}
-    [TopologicalSpace α] [TopologicalSpace β] [TopologicalSpace χ]
-    (f : OpenPartialHomeomorph α β)
-    (g : OpenPartialHomeomorph β χ) (h : g.source ∩ f.target = ∅) : (f.trans g).source = ∅ := by
-  refine Set.eq_empty_of_forall_notMem ?_
-  intro z
-  by_contra c
-  obtain ⟨c1, c2⟩ := c
-  rw [← Set.not_nonempty_iff_eq_empty, Set.inter_comm] at h
-  unfold Set.Nonempty at h
-  simp at h
-  specialize h (f z) (OpenPartialHomeomorph.map_source f c1)
-  exact h c2
-
-lemma if_source_of_first_empty_then_composition_empty_coerc
-    {α : Type u} {β : Type v} {χ : Type w}
-    [TopologicalSpace α] [TopologicalSpace β] [TopologicalSpace χ]
-    (f : OpenPartialHomeomorph α β)
-    (g : OpenPartialHomeomorph β χ) (h : f.source = ∅) : (f.trans g).source = ∅ := by
-  rw [OpenPartialHomeomorph.trans_source, h, Set.empty_inter]
-
-lemma if_source_of_second_empty_then_composition_empty_coerc
-    {α : Type u} {β : Type v} {χ : Type w}
-    [TopologicalSpace α] [TopologicalSpace β] [TopologicalSpace χ]
-    (f : OpenPartialHomeomorph α β)
-    (g : OpenPartialHomeomorph β χ) (h : g.source = ∅) : (f.trans g).source = ∅ := by
-  apply if_no_source_in_target_composition_empty_coerc
-  rw [h]
-  simp
-
-
-
-
-#check PartialEquiv.EqOnSource
-#check PartialEquiv.trans_source
-
-#check OpenPartialHomeomorph.isOpen_image_of_subset_source
 
 lemma Set.inter_subset_if_left_subset {u} (A B C : Set u) (h : A ⊆ C) : A ∩ B ⊆ C := by
   exact fun ⦃a⦄ a_1 ↦ h (Set.inter_subset_left a_1)
-
-
 
 
 lemma confused_on_how_to_use_this (α : Type u)
