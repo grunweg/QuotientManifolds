@@ -231,7 +231,7 @@ lemma lemma2' {p p' : M}
   rw [← lemma2 h U U', ← Homeomorph.smul_symm, Homeomorph.image_symm, Homeomorph.preimage_image]
 
 -- i had to do this bc otherwise lemma3 wouldnt work??
-def π (p : M) : OrbitSpace M G := Quotient.mk _ p
+def π : M → OrbitSpace M G := fun p ↦ Quotient.mk _ p
 
 omit [TopologicalSpace M] [ProperlyDiscontinuousSMul G M] [ContinuousConstSMul G M] in
 /--
