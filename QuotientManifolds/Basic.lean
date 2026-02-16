@@ -80,10 +80,7 @@ lemma mem_aux_target (p : M) : ⟦p⟧ ∈ (aux G p).target := by
 variable (G) in
 def localInverseAt (p : M) : OpenPartialHomeomorph (OrbitSpace M G) M := (aux G p).symm
 
-lemma localInverseAt_apply_self {p : M} (hq : ⟦p⟧ ∈ (localInverseAt G p).source) :
-    (localInverseAt G p) ⟦p⟧ = p := by
-  apply (aux G p).injOn ((localInverseAt G p).map_source hq) (aux_prop G p)
-  simp only [localInverseAt, (aux G p).right_inv hq, aux_eq]
+
 
 /- confused? why do we need the hypothesis hq?
 lemma localInverseAt_apply_self {p : M} :
@@ -110,6 +107,15 @@ lemma quotientMk_mem_localInverseAt_source {p : M} : ⟦p⟧ ∈ (localInverseAt
   simp only [localInverseAt, OpenPartialHomeomorph.symm_source]
   exact mem_aux_target p
 
+lemma localInverseAt_apply_self {p : M}
+    --(hq : ⟦p⟧ ∈ (localInverseAt G p).source)
+    --- this is not necessary
+  :
+    (localInverseAt G p) ⟦p⟧ = p := by
+  have hq := quotientMk_mem_localInverseAt_source (G:=G) (p:=p)
+  apply (aux G p).injOn ((localInverseAt G p).map_source hq) (aux_prop G p)
+  simp only [localInverseAt, (aux G p).right_inv hq, aux_eq]
+
 -- For every point `k ∈ M` s.t. k is in the domain of π_p and π_p'(k) is in the
 -- domain of(π_p)⁻¹ we have that ((π_p')⁻¹ ∘ π_p) (k) = k, for every p and p'
 -- where this makes sense.
@@ -135,11 +141,13 @@ instance : ChartedSpace H (OrbitSpace M G) where
   atlas := {myChartAt p | p : OrbitSpace M G}
   chartAt := myChartAt
   mem_chart_source q := by
-    simp only [myChartAt, OpenPartialHomeomorph.trans_toPartialEquiv, PartialEquiv.trans_source,
-      OpenPartialHomeomorph.toFun_eq_coe, Set.mem_inter_iff, Set.mem_preimage]
+    simp only [myChartAt, OpenPartialHomeomorph.trans_toPartialEquiv,
+      PartialEquiv.trans_source, OpenPartialHomeomorph.toFun_eq_coe,
+      Set.mem_inter_iff, Set.mem_preimage]
     set p := q.out
     rw [← q.out_eq, localInverseAt_apply_self]
     exact ⟨quotientMk_mem_localInverseAt_source G, mem_chart_source H p⟩
+
   chart_mem_atlas := by simp
 
 
