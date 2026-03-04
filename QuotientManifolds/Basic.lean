@@ -31,7 +31,7 @@ example : M → OrbitSpace M G := Quotient.mk _
 section prerequisites
 
 -- Mathlib already knows this is a topological space,
-example : TopologicalSpace (OrbitSpace M G) := by infer_instance
+example : TopologicalSpace (OrbitSpace M G) := by exact instTopologicalSpaceQuotient
 
 -- and that the quotient map is continuous.
 example : Continuous (Quotient.mk _ : M → (OrbitSpace M G)) := { isOpen_preimage := fun _s a ↦ a }
@@ -53,9 +53,8 @@ variable [IsCancelSMul G M] [T2Space M] [LocallyCompactSpace M]
 
 -- This follows from mathlib's definition of a properly discontinuous action.
 -- No need to work on this; it's proven in mathlib PR #7596.
-lemma isCoveringMap_quotientMk : IsCoveringMap (Quotient.mk _ : M → OrbitSpace M G) := by
-  apply IsQuotientCoveringMap.isCoveringMap (G := G)
-  exact isQuotientCoveringMap_quotientMk_of_properlyDiscontinuousSMul
+lemma isCoveringMap_quotientMk : IsCoveringMap (Quotient.mk _ : M → OrbitSpace M G) :=
+  IsQuotientCoveringMap.isCoveringMap isQuotientCoveringMap_quotientMk_of_properlyDiscontinuousSMul
 
 lemma isLocalHomeomorph : IsLocalHomeomorph (Quotient.mk _ : M → OrbitSpace M G) :=
   isCoveringMap_quotientMk.isLocalHomeomorph
@@ -147,7 +146,6 @@ instance : ChartedSpace H (OrbitSpace M G) where
     set p := q.out
     rw [← q.out_eq, localInverseAt_apply_self]
     exact ⟨quotientMk_mem_localInverseAt_source G, mem_chart_source H p⟩
-
   chart_mem_atlas := by simp
 
 
@@ -385,8 +383,92 @@ lemma confused_on_how_to_use_this' (α : Type u)
     := by
   exact (StructureGroupoid.mem_iff_of_eqOnSource hfg).mp hf
 
+lemma confused_on_how_to_use_this_groupoid (α : Type u)
+    [TopologicalSpace α]
+    (f g : OpenPartialHomeomorph H H)
+    (hfg : f.EqOnSource g)
+    (hf : f ∈ (contDiffGroupoid (↑n) I))
+    :
+    g ∈ (contDiffGroupoid (↑n) I)
+    := by
+  exact (StructureGroupoid.mem_iff_of_eqOnSource hfg).mp hf
+
+
 
 #check ContDiffOn.comp
+
+example (f : PartialEquiv H E) (A : Set H) (hA : A ⊆ f.source) :
+  f.symm '' (f '' A) = A := by exact
+  PartialEquiv.symm_image_image_of_subset_source f hA
+
+
+
+
+lemma my_lemma
+    (f g : OpenPartialHomeomorph M H)
+    (h : OpenPartialHomeomorph M M)
+    (x y : M)
+    (hf : chartAt H x = f)
+    (hg : chartAt H y = g)
+    (hh : ContMDiff I I n h)
+    (hhsymm : ContMDiff I I n h.symm)
+    :
+    f.symm ≫ₕ h ≫ₕ g ∈ (contDiffGroupoid (↑n) I) := by
+
+  rw [contMDiff_iff] at hh hhsymm
+  obtain ⟨_,hh⟩ := hh
+  obtain ⟨_,hhsymm⟩ := hhsymm
+  specialize hh x y
+  specialize hhsymm y x
+
+  simp [hf, hg] at hh hhsymm
+
+  set V := (Set.range ↑I ∩
+    ↑I.symm ⁻¹' f.target ∩
+    ↑f.symm ∘ ↑I.symm ⁻¹' (↑h ⁻¹' g.source))
+  set Vsymm := (Set.range ↑I ∩
+    ↑I.symm ⁻¹' g.target ∩
+    ↑g.symm ∘ ↑I.symm ⁻¹' (↑h.symm ⁻¹' f.source))
+
+  set U := (f.symm ≫ₕ h ≫ₕ g).source
+
+  have hU_open : IsOpen U := by
+    unfold U
+    exact (f.symm ≫ₕ h ≫ₕ g).open_source
+
+  apply StructureGroupoid.locality
+
+  intro u hu
+  refine ⟨U, hU_open, hu, ?_⟩
+
+  apply mem_groupoid_of_pregroupoid.mpr
+  simp [contDiffPregroupoid, hU_open.interior_eq]
+  constructor
+  · set K := (↑I.symm ⁻¹' f.target ∩
+      (↑I.symm ⁻¹' (↑f.symm ⁻¹' h.source) ∩
+      ↑I.symm ⁻¹' (↑f.symm ⁻¹' (↑h ⁻¹' g.source))) ∩
+      ↑I.symm ⁻¹' U ∩
+      Set.range ↑I)
+    have aux : K ⊆ V := by
+      unfold K V U
+      intro v hv
+      refine ⟨⟨hv.2, hv.1.1.1⟩, hv.1.2.2.2⟩
+    apply ContDiffOn.mono (t:=K) at hh
+    specialize hh aux
+    exact hh
+  · set K := (↑I.symm ⁻¹' g.target ∩
+      ↑I.symm ⁻¹' (↑g.symm ⁻¹' h.target) ∩
+      ↑I.symm ⁻¹' (↑h.symm ∘ ↑g.symm ⁻¹' f.source) ∩
+      ↑I.symm ⁻¹' (↑f ∘ ↑h.symm ∘ ↑g.symm ⁻¹' U) ∩
+      Set.range ↑I)
+    have aux : K ⊆ Vsymm := by
+      unfold K Vsymm U
+      intro v hv
+      refine ⟨⟨hv.2, hv.1.1.1.1⟩, hv.1.1.2⟩
+    apply ContDiffOn.mono (t:=K) at hhsymm
+    specialize hhsymm aux
+    exact hhsymm
+
 
 -- And let's prove that it's a manifold.
 instance : IsManifold I n (OrbitSpace M G) where
@@ -412,8 +494,8 @@ instance : IsManifold I n (OrbitSpace M G) where
       rfl
 
 
-    set φy := chartAt H (Quotient.out y)
-    set φx := chartAt H (Quotient.out x)
+    set φy := chartAt H (Quotient.out y) with hϕy
+    set φx := chartAt H (Quotient.out x) with hϕx
     set πinvx := localInverseAt G (Quotient.out x)
     set πinvy := localInverseAt G (Quotient.out y)
 
@@ -421,7 +503,7 @@ instance : IsManifold I n (OrbitSpace M G) where
     nth_rw 1 [OpenPartialHomeomorph.trans_assoc]
     nth_rw 2 [← OpenPartialHomeomorph.trans_assoc]
 
-    unfold contDiffGroupoid
+    --unfold contDiffGroupoid
 
     apply StructureGroupoid.locality
 
@@ -679,51 +761,21 @@ instance : IsManifold I n (OrbitSpace M G) where
             exact hz.left
         exact Eq.symm (f_eq_φρφ z this)
 
-    apply confused_on_how_to_use_this' (α := H)
+
+    apply confused_on_how_to_use_this_groupoid (α := H)
       (f := ((φx.symm.trans ((ρ.toOpenPartialHomeomorph (X := M) (Y := M)).trans φy)).restr
         (s ∩ f.source)))
       (g := (f.restr s))
       (hfg := hfg)
 
-    have aux1 : (φx.symm ≫ₕ φy).restr s ∈ (contDiffPregroupoid (↑n) I).groupoid := by sorry
+    have my := my_lemma I φx φy ρ.toOpenPartialHomeomorph
+      x.out y.out (by unfold φx; rfl) (by unfold φy; rfl)
+      (E:=E) (𝕜:=𝕜) (n:=n) (by sorry) (by sorry)
 
-    let help := IsManifold.toHasGroupoid (M:=M) (n:=n) (I:=I)
-
-    --have aux2 : ρ.toOpenPartialHomeomorph ∈ contDiffGroupoid (↑n) I := by sorry
-
-    have φx_atlas : φx ∈ atlas H M := by
-        exact ChartedSpace.chart_mem_atlas (Quotient.out x)
-
-    have φy_atlas : φy ∈ atlas H M := by
-      exact ChartedSpace.chart_mem_atlas (Quotient.out y)
-
-    #check mem_groupoid_of_pregroupoid
-
-    apply mem_groupoid_of_pregroupoid.mpr
-    #check StructureGroupoid.trans_restricted
-
-    have φx_max_atlas : φx ∈ (contDiffGroupoid (↑n) I).maximalAtlas M := by
-      apply StructureGroupoid.chart_mem_maximalAtlas
-
-    have φy_max_atlas : φy ∈ (contDiffGroupoid (↑n) I).maximalAtlas M := by
-      apply StructureGroupoid.chart_mem_maximalAtlas
-
-
-    constructor
-    ·
-      simp [contDiffPregroupoid]
-      expose_names
-      #check ContDiffOn.comp
-
-      #check inst_6.compatible φx_atlas φy_atlas
-
-
-
-      sorry
-    ·
-      sorry
-
-
+    apply closedUnderRestriction'
+    · exact my
+    · exact TopologicalSpace.isOpen_inter _ _
+        is_open_s f.open_source
 
 
 -- Once we have done this, let's prove that the projection map is smooth.
