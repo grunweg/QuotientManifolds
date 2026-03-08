@@ -230,7 +230,7 @@ lemma lemma2 {p p' : M}
   nth_rw 2 [Set.inter_comm]
   exact Homeomorph.smul_image_inter_preimage (g0 h) U U'
 
--- i had to do this bc otherwise lemma3 wouldnt work??
+-- to-do: delete this and just use ⟦ ⟧?
 def π : M → OrbitSpace M G := fun p ↦ Quotient.mk _ p
 
 omit [TopologicalSpace M] [ProperlyDiscontinuousSMul G M]
@@ -240,88 +240,44 @@ Applying the projection function to two elements that are
 related via the relation yields the same result, namely
 `π u = π (g • u)`.
 -/
-lemma quotient_ignores_smul (g : G) (u : M) : π (G := G) u = π (g • u) := by
+lemma quotient_ignores_smul (g : G) (u : M) :
+    π (G := G) u = π (g • u) := by
   exact Quotient.eq.mpr ⟨g⁻¹, (by exact inv_smul_smul g u)⟩
 
-lemma Set.inter_subset_if_left_subset {u} (A B C : Set u) (h : A ⊆ C) : A ∩ B ⊆ C := by
-  exact fun ⦃a⦄ a_1 ↦ h (Set.inter_subset_left a_1)
-
-
-lemma confused_on_how_to_use_this_groupoid (α : Type u)
-    [TopologicalSpace α]
-    (f g : OpenPartialHomeomorph H H)
-    (hfg : f.EqOnSource g)
-    (hf : f ∈ (contDiffGroupoid (↑n) I))
-    :
-    g ∈ (contDiffGroupoid (↑n) I)
-    := by
-  exact (StructureGroupoid.mem_iff_of_eqOnSource hfg).mp hf
-
-
-lemma my_lemma
-    (f g : OpenPartialHomeomorph M H)
-    (h : OpenPartialHomeomorph M M)
-    (x y : M)
-    (hf : chartAt H x = f)
-    (hg : chartAt H y = g)
+/-
+There has to be an easier way of proving this without using locality but I can't find it.
+-/
+omit [T2Space M] [LocallyCompactSpace M] in
+lemma mem_contDiffGroupoid_of_contMDiff_chartAt
+    (x y : M) {h : OpenPartialHomeomorph M M}
     (hh : ContMDiff I I n h)
     (hhsymm : ContMDiff I I n h.symm)
     :
-    f.symm ≫ₕ h ≫ₕ g ∈ (contDiffGroupoid (↑n) I) := by
-
+    (chartAt H x).symm ≫ₕ h ≫ₕ (chartAt H y) ∈ (contDiffGroupoid (↑n) I) := by
   rw [contMDiff_iff] at hh hhsymm
-  obtain ⟨_,hh⟩ := hh
-  obtain ⟨_,hhsymm⟩ := hhsymm
-  specialize hh x y
-  specialize hhsymm y x
-
-  simp [hf, hg] at hh hhsymm
-
-  set V := (Set.range ↑I ∩
-    ↑I.symm ⁻¹' f.target ∩
-    ↑f.symm ∘ ↑I.symm ⁻¹' (↑h ⁻¹' g.source))
-  set Vsymm := (Set.range ↑I ∩
-    ↑I.symm ⁻¹' g.target ∩
-    ↑g.symm ∘ ↑I.symm ⁻¹' (↑h.symm ⁻¹' f.source))
-
-  set U := (f.symm ≫ₕ h ≫ₕ g).source
-
-  have hU_open : IsOpen U := by
-    unfold U
-    exact (f.symm ≫ₕ h ≫ₕ g).open_source
-
-  apply StructureGroupoid.locality
-
-  intro u hu
-  refine ⟨U, hU_open, hu, ?_⟩
-
+  obtain hh := hh.2 x y
+  obtain hhsymm := hhsymm.2 y x
+  set f := (chartAt H x).symm ≫ₕ h ≫ₕ (chartAt H y)
   apply mem_groupoid_of_pregroupoid.mpr
-  simp [contDiffPregroupoid, hU_open.interior_eq]
   constructor
-  · set K := (↑I.symm ⁻¹' f.target ∩
-      (↑I.symm ⁻¹' (↑f.symm ⁻¹' h.source) ∩
-      ↑I.symm ⁻¹' (↑f.symm ⁻¹' (↑h ⁻¹' g.source))) ∩
-      ↑I.symm ⁻¹' U ∩
-      Set.range ↑I)
-    have aux : K ⊆ V := by
-      unfold K V U
-      intro v hv
-      refine ⟨⟨hv.2, hv.1.1.1⟩, hv.1.2.2.2⟩
-    apply ContDiffOn.mono (t:=K) at hh
-    specialize hh aux
-    exact hh
-  · set K := (↑I.symm ⁻¹' g.target ∩
-      ↑I.symm ⁻¹' (↑g.symm ⁻¹' h.target) ∩
-      ↑I.symm ⁻¹' (↑h.symm ∘ ↑g.symm ⁻¹' f.source) ∩
-      ↑I.symm ⁻¹' (↑f ∘ ↑h.symm ∘ ↑g.symm ⁻¹' U) ∩
-      Set.range ↑I)
-    have aux : K ⊆ Vsymm := by
-      unfold K Vsymm U
-      intro v hv
-      refine ⟨⟨hv.2, hv.1.1.1.1⟩, hv.1.1.2⟩
-    apply ContDiffOn.mono (t:=K) at hhsymm
-    specialize hhsymm aux
-    exact hhsymm
+  · refine hh.mono ?_
+    intro v hv
+    simp only [extChartAt, OpenPartialHomeomorph.extend,
+      PartialEquiv.trans_target, ModelWithCorners.target_eq,
+      ModelWithCorners.toPartialEquiv_coe_symm,
+      PartialEquiv.coe_trans_symm, PartialEquiv.trans_source,
+      ModelWithCorners.source_eq, Set.preimage_univ,
+      Set.inter_univ] -- should this just be simp
+    refine ⟨⟨hv.2, hv.1.1⟩, hv.1.2.2⟩
+  · refine hhsymm.mono ?_
+    intro v hv
+    simp only [extChartAt, OpenPartialHomeomorph.extend,
+      PartialEquiv.trans_target, ModelWithCorners.target_eq,
+      ModelWithCorners.toPartialEquiv_coe_symm,
+      PartialEquiv.coe_trans_symm, PartialEquiv.trans_source,
+      ModelWithCorners.source_eq, Set.preimage_univ,
+      Set.inter_univ]
+    refine ⟨⟨hv.2, hv.1.1.1⟩, hv.1.2⟩
 
 open Homeomorph -- maybe its not the best but it allows me to write smul
 
@@ -332,6 +288,7 @@ instance : IsManifold I n (OrbitSpace M G) where
 
     unfold myChartAt
 
+    -- this should go outside as a lemma for local inverse or something
     have hπ : ∀ {u : M} {z : OrbitSpace M G},
         π u = (localInverseAt G (Quotient.out z)).symm u := by
       intro u z
@@ -363,9 +320,7 @@ instance : IsManifold I n (OrbitSpace M G) where
 
     set g0 := g0 heq
     set Up' := Up ∩ smul g0⁻¹ '' Uq
-    set Uq' := Uq ∩ smul g0 '' Up
 
-    --set s := ((πinvx ≫ₕ φx) '' (π '' Up' ∩ π '' Uq'))
     set t := φx '' (Up')
 
     have is_open_Up' : IsOpen Up' := by
@@ -434,7 +389,7 @@ instance : IsManifold I n (OrbitSpace M G) where
           refine ⟨?_, ?_⟩
           · rw [← hz]
             refine ⟨φx.map_source' hu.1.2, ?_⟩
-            obtain ⟨_, hu'⟩ := hu.2
+            obtain ⟨u', hu'⟩ := hu.2
             simp only [OpenPartialHomeomorph.symm_symm,
               OpenPartialHomeomorph.trans_source,
               Homeomorph.toOpenPartialHomeomorph_source,
@@ -452,16 +407,12 @@ instance : IsManifold I n (OrbitSpace M G) where
         rw [interior_inter,IsOpen.interior_eq f.open_source] at hz
         exact hz.symm
 
-    apply confused_on_how_to_use_this_groupoid (α := H)
-      (f := ((φx.symm.trans (((smul g0).toOpenPartialHomeomorph (X := M) (Y := M)).trans φy)).restr
-        (t ∩ f.source)))
-      (g := (f.restr t))
-      (hfg := hfg_t)
+    apply (StructureGroupoid.mem_iff_of_eqOnSource hfg_t).mp
 
     apply closedUnderRestriction'
-    · exact my_lemma I φx φy (smul g0).toOpenPartialHomeomorph
-        x.out y.out (by unfold φx; rfl) (by unfold φy; rfl)
-        (by sorry) (by sorry)
+    · exact mem_contDiffGroupoid_of_contMDiff_chartAt
+        I (h:=(smul g0).toOpenPartialHomeomorph)
+        x.out y.out (by sorry) (by sorry)
     · exact TopologicalSpace.isOpen_inter _ _
         is_open_t f.open_source
 
