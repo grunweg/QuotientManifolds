@@ -167,7 +167,7 @@ lemma lemma1
   refine Quotient.exact ?_
   rw [aux_eq G p, aux_eq G p'] at h
   exact h.symm
-
+----- TODO: re escribir esto; simplemente esto es cierto si π u = π u'; es más sencillo usarlo asi
 
 /--
 If two elements are such that `p u = π_p' u'`,
@@ -189,23 +189,15 @@ lemma g0_prop {p p' : M}
     (h : (aux G p) u = (aux G p') u')
     : g0 h • u = u' := by exact Classical.choose_spec (lemma1 h)
 
-
-/-
-the homeomorphism x→ x.g0
-from X onto itself
-carries the open set Ui' = Ui ∩ (Uj.g₀⁻¹) around ui
-onto the open set Uj' = Uj ∩ (Ui.g₀) around uj
--/
-
--- more general version
 -- TO-DO: write this with the proper variables and hypothesis for G and M
-
-omit [ProperlyDiscontinuousSMul G M] in
+omit [ProperlyDiscontinuousSMul G M] [IsCancelSMul G M]
+[T2Space M] [LocallyCompactSpace M] in
 lemma Homeomorph.smul_symm {g : G} :
   (Homeomorph.smul g (α := M)).symm = (Homeomorph.smul g⁻¹) := by
   exact Homeomorph.ext_iff.mpr (congrFun rfl)
 
-omit [ProperlyDiscontinuousSMul G M] in
+omit [ProperlyDiscontinuousSMul G M] [IsCancelSMul G M]
+[T2Space M] [LocallyCompactSpace M] in
 lemma Homeomorph.smul_image_inter_preimage
     (g : G)
     (U : Set M)
@@ -215,9 +207,6 @@ lemma Homeomorph.smul_image_inter_preimage
   rw [← Homeomorph.smul_symm, Homeomorph.image_symm]
   exact Set.image_inter_preimage (⇑(Homeomorph.smul g)) U U'
 
-/--
-For any two sets `U` and `V`,
--/
 lemma lemma2 {p p' : M}
     {u u' : M}
     (h : (aux G p) u = (aux G p') u')
@@ -228,247 +217,53 @@ lemma lemma2 {p p' : M}
   nth_rw 2 [Set.inter_comm]
   exact Homeomorph.smul_image_inter_preimage (g0 h) U U'
 
-lemma lemma2' {p p' : M}
-    {u u' : M}
-    (h : (aux G p) u = (aux G p') u')
-    (U : Set M)
-    (U' : Set M)
-    : Homeomorph.smul (g0 h)⁻¹ '' (U' ∩ (Homeomorph.smul (g0 h) '' U))
-      =  (U ∩ (Homeomorph.smul (g0 h)⁻¹ '' U')) := by
-  rw [← lemma2 h U U', ← Homeomorph.smul_symm, Homeomorph.image_symm, Homeomorph.preimage_image]
-
--- i had to do this bc otherwise lemma3 wouldnt work??
+-- to-do: delete this and just use ⟦ ⟧?
 def π : M → OrbitSpace M G := fun p ↦ Quotient.mk _ p
 
-omit [TopologicalSpace M] [ProperlyDiscontinuousSMul G M] [ContinuousConstSMul G M] in
+omit [TopologicalSpace M] [ProperlyDiscontinuousSMul G M]
+[ContinuousConstSMul G M] [IsCancelSMul G M] in
 /--
 Applying the projection function to two elements that are
 related via the relation yields the same result, namely
 `π u = π (g • u)`.
 -/
-lemma quotient_ignores_smul (g : G) (u : M) : π (G := G) u = π (g • u) := by
+lemma quotient_ignores_smul (g : G) (u : M) :
+    π (G := G) u = π (g • u) := by
   exact Quotient.eq.mpr ⟨g⁻¹, (by exact inv_smul_smul g u)⟩
 
-
-omit [ProperlyDiscontinuousSMul G M] in
-/--
-Applying the projection function to two sets that are
-related via the relation yields the same result, namely
-`π s = π (g • U)`.
--/
-lemma quotient_ignores_smul_image
-  (g : G) (U : Set M) : π (G := G) '' U = π '' (Homeomorph.smul g '' U) := by
-  ext u
-  constructor
-  · intro ⟨v, hv⟩
-    simp only [Homeomorph.smul_apply, Set.mem_image, exists_exists_and_eq_and]
-    use v
-    refine ⟨hv.left, ?_⟩
-    rw [← hv.right]
-    exact Eq.symm (quotient_ignores_smul g v)
-  · intro ⟨v, hv⟩
-    obtain ⟨u', hu'⟩ := hv.left
-    use u'
-    refine ⟨hu'.left, ?_⟩
-    rw [← hv.right, ← hu'.right, Homeomorph.smul_apply]
-    exact quotient_ignores_smul g u'
-
-
-omit [ProperlyDiscontinuousSMul G M] in
-/--
-For any group element `g : G` and any sets `U, U' ⊆ M`
-it holds that
-`π (U ∩ g⁻¹ • U') ∩ π (U' ∩ g • U) = π (g • (U ∩ g⁻¹ • U'))`.
--/
-lemma quotient_image_smul_eq
-    (g : G)
-    (U : Set M)
-    (U' : Set M) :
-    ((π (G:=G)) '' (U ∩ (Homeomorph.smul g⁻¹ '' U')))
-      ∩ (π (G:=G)) '' (U' ∩ (Homeomorph.smul g '' U)) =
-      (π (G:=G)) '' (Homeomorph.smul g '' (U ∩ (Homeomorph.smul g⁻¹ '' U'))) := by
-  rw [Homeomorph.smul_image_inter_preimage]
-  nth_rw 4 [Set.inter_comm]
-  rw [Set.inter_eq_right]
-
-  intro x ⟨z, ⟨⟨hz, ⟨y, hy⟩⟩, hx⟩⟩
-  use y
-  refine ⟨⟨hy.left, ?_⟩, ?_⟩
-  · use z
-    refine ⟨hz, ?_⟩
-    rw [← hy.right]
-    simp only [Homeomorph.smul_apply, inv_smul_smul]
-  · rw [← hx, ← hy.right, Homeomorph.smul_apply]
-    exact quotient_ignores_smul g y
-
-variable (G) in
-lemma lemma3 {p p' : M}
-    {u u' : M}
-    (h : (aux G p) u = (aux G p') u')
-    (U : Set M)
-    (U' : Set M)
-
-    : ((π (G:=G)) '' (U ∩ (Homeomorph.smul (g0 h)⁻¹ '' U')))
-      ∩ (π (G:=G)) '' (U' ∩ (Homeomorph.smul (g0 h) '' U)) =
-      (π (G:=G)) '' (Homeomorph.smul (g0 h) '' (U ∩ (Homeomorph.smul (g0 h)⁻¹ '' U'))) := by
-
-  exact quotient_image_smul_eq (g0 h) U U'
-
-variable (G) in
-lemma lemma3' {p p' : M}
-    {u u' : M}
-    (h : (aux G p) u = (aux G p') u')
-    (U : Set M)
-    (U' : Set M)
-
-    : ((π (G:=G)) '' (U ∩ (Homeomorph.smul (g0 h)⁻¹ '' U')))
-      ∩ (π (G:=G)) '' (U' ∩ (Homeomorph.smul (g0 h) '' U)) =
-      (π (G:=G)) '' (Homeomorph.smul (g0 h)⁻¹ '' (U' ∩ (Homeomorph.smul (g0 h) '' U))) := by
-  rw [lemma3, lemma2]
-  set A := U ∩ ⇑(Homeomorph.smul (g0 h)⁻¹) '' U'
-  set B := U' ∩ ⇑(Homeomorph.smul (g0 h)) '' U
-  exact quotient_ignores_smul_image (g0 h)⁻¹ B
-
-
-example (x y : OrbitSpace M G) :
-    (chartAt H (Quotient.out x)).symm ≫ₕ chartAt H (Quotient.out y) ∈ contDiffGroupoid (↑n) I := by
-  refine IsManifold.compatible_of_mem_maximalAtlas ?_ ?_
-  · -- φ ∈ IsManifold.maximalAtlas I (↑n) M ?
-    apply IsManifold.chart_mem_maximalAtlas
-  · -- φ' ∈ IsManifold.maximalAtlas I (↑n) M ?
-    apply IsManifold.chart_mem_maximalAtlas
-
-
-/-- Note: we have this instance
-      instance :
-        Membership (OpenPartialHomeomorph H H) (StructureGroupoid H)
-        := ⟨fun (G : StructureGroupoid H) (e : OpenPartialHomeomorph H H) ↦ e ∈ G.members⟩
-
-      which means that an open partial homeomorphism can be a member of structured groupoid
-      if it is on its members
--/
-
-example (p q : M) : (chartAt H p).symm ≫ₕ (chartAt H q) ∈ contDiffGroupoid (↑n) I := by
-  change (chartAt H p).symm ≫ₕ chartAt H q ∈ (contDiffGroupoid (↑n) I).members
-
-  have hp : chartAt H p ∈ atlas H M := by exact ChartedSpace.chart_mem_atlas p
-  have hq : chartAt H q ∈ atlas H M := by exact ChartedSpace.chart_mem_atlas q
-
-  have manifold : IsManifold I (↑n) M := by (expose_names; exact inst_6)
-  exact manifold.compatible hp hq
-
-
-
-lemma Set.inter_subset_if_left_subset {u} (A B C : Set u) (h : A ⊆ C) : A ∩ B ⊆ C := by
-  exact fun ⦃a⦄ a_1 ↦ h (Set.inter_subset_left a_1)
-
-
-lemma confused_on_how_to_use_this (α : Type u)
-    [TopologicalSpace α]
-    (f g : OpenPartialHomeomorph H H)
-    (hfg : f.EqOnSource g)
-    (hf : (contDiffPregroupoid n I).property f f.source)
-    :
-    (contDiffPregroupoid n I).property g g.source
-    := by
-  exact mem_pregroupoid_of_eqOnSource (contDiffPregroupoid (↑n) I) hfg hf
-
-lemma confused_on_how_to_use_this' (α : Type u)
-    [TopologicalSpace α]
-    (f g : OpenPartialHomeomorph H H)
-    (hfg : f.EqOnSource g)
-    (hf : f ∈ (contDiffPregroupoid (↑n) I).groupoid)
-    :
-    g ∈ (contDiffPregroupoid (↑n) I).groupoid
-    := by
-  exact (StructureGroupoid.mem_iff_of_eqOnSource hfg).mp hf
-
-lemma confused_on_how_to_use_this_groupoid (α : Type u)
-    [TopologicalSpace α]
-    (f g : OpenPartialHomeomorph H H)
-    (hfg : f.EqOnSource g)
-    (hf : f ∈ (contDiffGroupoid (↑n) I))
-    :
-    g ∈ (contDiffGroupoid (↑n) I)
-    := by
-  exact (StructureGroupoid.mem_iff_of_eqOnSource hfg).mp hf
-
-
-
-#check ContDiffOn.comp
-
-example (f : PartialEquiv H E) (A : Set H) (hA : A ⊆ f.source) :
-  f.symm '' (f '' A) = A := by exact
-  PartialEquiv.symm_image_image_of_subset_source f hA
-
-
-
-
-lemma my_lemma
-    (f g : OpenPartialHomeomorph M H)
-    (h : OpenPartialHomeomorph M M)
-    (x y : M)
-    (hf : chartAt H x = f)
-    (hg : chartAt H y = g)
+omit [T2Space M] [LocallyCompactSpace M] in
+lemma mem_contDiffGroupoid_of_contMDiff_chartAt
+    (x y : M) {h : OpenPartialHomeomorph M M}
     (hh : ContMDiff I I n h)
     (hhsymm : ContMDiff I I n h.symm)
     :
-    f.symm ≫ₕ h ≫ₕ g ∈ (contDiffGroupoid (↑n) I) := by
-
+    (chartAt H x).symm ≫ₕ h ≫ₕ (chartAt H y) ∈ (contDiffGroupoid (↑n) I) := by
   rw [contMDiff_iff] at hh hhsymm
-  obtain ⟨_,hh⟩ := hh
-  obtain ⟨_,hhsymm⟩ := hhsymm
-  specialize hh x y
-  specialize hhsymm y x
-
-  simp [hf, hg] at hh hhsymm
-
-  set V := (Set.range ↑I ∩
-    ↑I.symm ⁻¹' f.target ∩
-    ↑f.symm ∘ ↑I.symm ⁻¹' (↑h ⁻¹' g.source))
-  set Vsymm := (Set.range ↑I ∩
-    ↑I.symm ⁻¹' g.target ∩
-    ↑g.symm ∘ ↑I.symm ⁻¹' (↑h.symm ⁻¹' f.source))
-
-  set U := (f.symm ≫ₕ h ≫ₕ g).source
-
-  have hU_open : IsOpen U := by
-    unfold U
-    exact (f.symm ≫ₕ h ≫ₕ g).open_source
-
-  apply StructureGroupoid.locality
-
-  intro u hu
-  refine ⟨U, hU_open, hu, ?_⟩
-
+  obtain hh := hh.2 x y
+  obtain hhsymm := hhsymm.2 y x
+  set f := (chartAt H x).symm ≫ₕ h ≫ₕ (chartAt H y)
   apply mem_groupoid_of_pregroupoid.mpr
-  simp [contDiffPregroupoid, hU_open.interior_eq]
   constructor
-  · set K := (↑I.symm ⁻¹' f.target ∩
-      (↑I.symm ⁻¹' (↑f.symm ⁻¹' h.source) ∩
-      ↑I.symm ⁻¹' (↑f.symm ⁻¹' (↑h ⁻¹' g.source))) ∩
-      ↑I.symm ⁻¹' U ∩
-      Set.range ↑I)
-    have aux : K ⊆ V := by
-      unfold K V U
-      intro v hv
-      refine ⟨⟨hv.2, hv.1.1.1⟩, hv.1.2.2.2⟩
-    apply ContDiffOn.mono (t:=K) at hh
-    specialize hh aux
-    exact hh
-  · set K := (↑I.symm ⁻¹' g.target ∩
-      ↑I.symm ⁻¹' (↑g.symm ⁻¹' h.target) ∩
-      ↑I.symm ⁻¹' (↑h.symm ∘ ↑g.symm ⁻¹' f.source) ∩
-      ↑I.symm ⁻¹' (↑f ∘ ↑h.symm ∘ ↑g.symm ⁻¹' U) ∩
-      Set.range ↑I)
-    have aux : K ⊆ Vsymm := by
-      unfold K Vsymm U
-      intro v hv
-      refine ⟨⟨hv.2, hv.1.1.1.1⟩, hv.1.1.2⟩
-    apply ContDiffOn.mono (t:=K) at hhsymm
-    specialize hhsymm aux
-    exact hhsymm
+  · refine hh.mono ?_
+    intro v hv
+    simp only [extChartAt, OpenPartialHomeomorph.extend,
+      PartialEquiv.trans_target, ModelWithCorners.target_eq,
+      ModelWithCorners.toPartialEquiv_coe_symm,
+      PartialEquiv.coe_trans_symm, PartialEquiv.trans_source,
+      ModelWithCorners.source_eq, Set.preimage_univ,
+      Set.inter_univ] -- should this just be simp
+    refine ⟨⟨hv.2, hv.1.1⟩, hv.1.2.2⟩
+  · refine hhsymm.mono ?_
+    intro v hv
+    simp only [extChartAt, OpenPartialHomeomorph.extend,
+      PartialEquiv.trans_target, ModelWithCorners.target_eq,
+      ModelWithCorners.toPartialEquiv_coe_symm,
+      PartialEquiv.coe_trans_symm, PartialEquiv.trans_source,
+      ModelWithCorners.source_eq, Set.preimage_univ,
+      Set.inter_univ]
+    refine ⟨⟨hv.2, hv.1.1.1⟩, hv.1.2⟩
 
+open Homeomorph -- maybe its not the best but it allows me to write smul
 
 -- And let's prove that it's a manifold.
 instance : IsManifold I n (OrbitSpace M G) where
@@ -477,8 +272,7 @@ instance : IsManifold I n (OrbitSpace M G) where
 
     unfold myChartAt
 
-    --- renaming
-
+    -- this should go outside as a lemma for local inverse or something
     have hπ : ∀ {u : M} {z : OrbitSpace M G},
         π u = (localInverseAt G (Quotient.out z)).symm u := by
       intro u z
@@ -486,14 +280,7 @@ instance : IsManifold I n (OrbitSpace M G) where
       rw [aux_eq]
       rfl
 
-    have hπ' : ∀ {s : Set M} {z : OrbitSpace M G},
-        π '' s = (localInverseAt G (Quotient.out z)).symm '' s := by
-      intro s z
-      change π '' s = (aux G z.out) '' s
-      rw [aux_eq]
-      rfl
-
-
+    --- renaming
     set φy := chartAt H (Quotient.out y) with hϕy
     set φx := chartAt H (Quotient.out x) with hϕx
     set πinvx := localInverseAt G (Quotient.out x)
@@ -503,280 +290,115 @@ instance : IsManifold I n (OrbitSpace M G) where
     nth_rw 1 [OpenPartialHomeomorph.trans_assoc]
     nth_rw 2 [← OpenPartialHomeomorph.trans_assoc]
 
-    --unfold contDiffGroupoid
-
     apply StructureGroupoid.locality
 
     intro h hh
-    simp only [OpenPartialHomeomorph.trans_toPartialEquiv,
-      OpenPartialHomeomorph.symm_toPartialEquiv, PartialEquiv.trans_source,
-      PartialEquiv.symm_source, OpenPartialHomeomorph.coe_coe_symm, PartialEquiv.coe_trans,
-      OpenPartialHomeomorph.toFun_eq_coe, Set.preimage_inter, Set.mem_inter_iff, Set.mem_preimage,
-      Function.comp_apply] at hh
     obtain ⟨hh1, ⟨hh2, hh3⟩, hh4⟩ := hh
 
-    set Up := πinvx.target ∩ φx.source
-    set Uq := πinvy.target ∩ φy.source
-
-    have hUp : φx.symm h ∈ Up := by
-      refine ⟨hh2, ?_⟩
-      exact OpenPartialHomeomorph.map_target φx hh1
-
-    have hUq : πinvy (πinvx.symm (φx.symm h)) ∈ Uq := by
-      refine ⟨?_, hh4⟩
-      exact OpenPartialHomeomorph.map_source πinvy hh3
+    set Up := πinvx.target ∩ φx.source -- U H x
+    set Uq := πinvy.target ∩ φy.source -- U H y
 
     have heq : πinvx.symm (φx.symm h) = πinvy.symm (πinvy (πinvx.symm (φx.symm h))) := by
       rw [OpenPartialHomeomorph.left_inv]
       exact hh3
 
-    have lemma2 := lemma2 heq Up Uq
-    have lemma3 := lemma3 G heq Up Uq
-    have g0_prop := g0_prop heq
+    set g0 := g0 heq
+    set Up' := Up ∩ smul g0⁻¹ '' Uq
 
-    set ρ : Homeomorph M M := Homeomorph.smul (g0 heq)
-    have ρ_prop : ∀ m : M, ρ m = (g0 heq) • m := by exact fun m ↦ rfl
-    set ρinv : Homeomorph M M := Homeomorph.smul (g0 heq)⁻¹
-    have ρinv_prop : ∀ m : M, ρinv m = (g0 heq)⁻¹ • m := by exact fun m ↦ rfl
-    set Up' := Up ∩ ρinv '' Uq
-    set Uq' := Uq ∩ ρ '' Up
-
-    have lemma2 : ρ '' Up' = Uq' := by
-      exact lemma2
-
-    have lemma2' : ρinv '' Uq' = Up' := by
-      exact lemma2' heq Up Uq
-
-    have lemma3 : π (G := G) '' (Up') ∩ π '' (Uq') = π '' (ρ '' Up') :=
-      by exact lemma3
-
-    have lemma3' : π (G := G) '' (Up') ∩ π '' (Uq') = π '' (ρinv '' Uq') :=
-      by exact lemma3' (G:=G) heq Up Uq
-
-    use ((πinvx ≫ₕ φx) '' ((π (G := G) '' Up') ∩ (π (G := G) '' Uq')))
+    set t := φx '' (Up')
 
     have is_open_Up' : IsOpen Up' := by
       apply TopologicalSpace.isOpen_inter
       · apply TopologicalSpace.isOpen_inter
         · apply OpenPartialHomeomorph.open_target
         · apply OpenPartialHomeomorph.open_source
-      · change IsOpen (⇑ρinv '' Uq)
+      · change IsOpen (smul g0⁻¹ '' Uq) -- why is this needed?
         rw [Homeomorph.isOpen_image]
         apply TopologicalSpace.isOpen_inter
         · apply OpenPartialHomeomorph.open_target
         · apply OpenPartialHomeomorph.open_source
 
-    have is_open_Uq' : IsOpen Uq' := by
-      apply TopologicalSpace.isOpen_inter
-      · apply TopologicalSpace.isOpen_inter
-        · apply OpenPartialHomeomorph.open_target
-        · apply OpenPartialHomeomorph.open_source
-      · change IsOpen (⇑ρ '' Up)
-        rw [Homeomorph.isOpen_image]
-        apply TopologicalSpace.isOpen_inter
-        · apply OpenPartialHomeomorph.open_target
-        · apply OpenPartialHomeomorph.open_source
+    have is_open_t : IsOpen t :=
+      OpenPartialHomeomorph.isOpen_image_of_subset_source _
+        is_open_Up'
+        (Set.Subset.trans Set.inter_subset_left Set.inter_subset_right)
 
-    have is_open_s : IsOpen ((πinvx ≫ₕ φx) '' (π '' Up' ∩ π '' Uq')) := by
-      apply OpenPartialHomeomorph.isOpen_image_of_subset_source
-      · -- its open (π '' Up' ∩ π '' Uq')
-        apply TopologicalSpace.isOpen_inter
-        · rw [hπ']
-          change IsOpen (πinvx.symm '' Up')
-          apply OpenPartialHomeomorph.isOpen_image_of_subset_source
-          · exact is_open_Up'
-          · apply Set.inter_subset_if_left_subset
-            exact Set.inter_subset_left
-        · rw [hπ']
-          change IsOpen (πinvy.symm '' Uq')
-          apply OpenPartialHomeomorph.isOpen_image_of_subset_source
-          · exact is_open_Uq'
-          · apply Set.inter_subset_if_left_subset
-            exact Set.inter_subset_left
-      · -- (π '' Up' ∩ π '' Uq') is in the source
-        simp only [OpenPartialHomeomorph.trans_toPartialEquiv,
-          PartialEquiv.trans_source,
-          Set.subset_inter_iff]
-        constructor
-        · apply Set.inter_subset_if_left_subset
-          rw [hπ' (z:=x)]
-          intro u hu
-          obtain ⟨v, ⟨hv1, hv2⟩⟩ := hu
-          have : Up' ⊆ πinvx.symm.source := by
-            apply Set.inter_subset_if_left_subset
-            exact Set.inter_subset_left
-          apply this at hv1
-          rw [← hv2]
-          exact OpenPartialHomeomorph.map_target πinvx hv1
-        · apply Set.inter_subset_if_left_subset
-          rw [hπ' (z:=x)]
-          simp only [OpenPartialHomeomorph.toFun_eq_coe, Set.image_subset_iff]
-          intro u hu
-          simp only [Set.mem_preimage]
-          rw [OpenPartialHomeomorph.right_inv πinvx hu.left.left]
-          exact hu.left.right
-
-    have h_in_s : h ∈ ((πinvx ≫ₕ φx) '' (π '' Up' ∩ π '' Uq')) := by
-      simp only [OpenPartialHomeomorph.coe_trans, Function.comp_apply,
-        Set.mem_image, Set.mem_inter_iff, ↓existsAndEq, and_true]
+    have h_in_t : h ∈ t := by
       use φx.symm h
-      rw [hπ]
-      constructor
-      · constructor
-        · refine ⟨⟨hh2, OpenPartialHomeomorph.map_target φx hh1⟩, ?_⟩
-          use πinvy (πinvx.symm (φx.symm h))
-          refine ⟨⟨OpenPartialHomeomorph.map_source πinvy hh3, hh4⟩, ?_⟩
-          apply ρ.injective
-          rw [ρ_prop, ρ_prop, g0_prop, ρinv_prop, smul_inv_smul]
-        · use πinvy (πinvx.symm (φx.symm h))
-          constructor
-          · refine ⟨⟨OpenPartialHomeomorph.map_source πinvy hh3, hh4⟩, ?_⟩
-            use φx.symm h
-            refine ⟨⟨hh2, OpenPartialHomeomorph.map_target φx hh1⟩, ?_⟩
-            apply ρinv.injective
-            rw [ρ_prop, g0_prop]
-          · rw [hπ, OpenPartialHomeomorph.left_inv πinvy hh3]
-      · rw [OpenPartialHomeomorph.right_inv πinvx hh2,
-          OpenPartialHomeomorph.right_inv φx hh1]
+      refine ⟨?_, ?_⟩
+      · refine ⟨⟨hh2, OpenPartialHomeomorph.map_target φx hh1⟩, ?_⟩
+        use πinvy (πinvx.symm (φx.symm h))
+        refine ⟨⟨OpenPartialHomeomorph.map_source πinvy hh3, hh4⟩, ?_⟩
+        apply (smul g0).injective
+        simp only [Homeomorph.smul_apply, smul_inv_smul]
+        rw [g0_prop heq]
+      · rw [OpenPartialHomeomorph.right_inv φx hh1]
 
-    refine ⟨is_open_s, ?_⟩
-    refine ⟨h_in_s, ?_⟩
+    refine ⟨t, is_open_t, h_in_t, ?_⟩
 
-    set f :=  (φx.symm ≫ₕ (πinvx.symm ≫ₕ πinvy) ≫ₕ φy)
-    set s := ((πinvx ≫ₕ φx) '' (π '' Up' ∩ π '' Uq'))
+    set f := (φx.symm ≫ₕ (πinvx.symm ≫ₕ πinvy) ≫ₕ φy)
 
-    have s_def : s = ((πinvx ≫ₕ φx) '' (π '' Up' ∩ π '' Uq')) := by rfl
-    have f_def : f = (φx.symm ≫ₕ (πinvx.symm ≫ₕ πinvy) ≫ₕ φy) := by rfl
-
-    have f_source : (f.restr s).source ⊆ s := by
+    have f_source_t : (f.restr t).source ⊆ t := by
       rw [OpenPartialHomeomorph.restr_source]
-      rw [IsOpen.interior_eq is_open_s]
+      rw [IsOpen.interior_eq is_open_t]
       exact Set.inter_subset_right
 
-    have f_eq_φρφ :
-        ∀ x ∈ (f.restr s).source, f x = φy (ρ (φx.symm x)) := by
+    have f_eq_φρφ_t :
+        ∀ x ∈ (f.restr t).source, f x = φy (smul g0 (φx.symm x)) := by
       intro z hz
-      apply f_source at hz
-      rw [s_def, lemma3] at hz
-      simp only [OpenPartialHomeomorph.coe_trans, Function.comp_apply,
-        Set.mem_image, exists_exists_and_eq_and] at hz
-
-      obtain ⟨u, ⟨hu, hz⟩⟩ := hz
-      rw [← hz, f_def]
-      simp only [OpenPartialHomeomorph.coe_trans, Function.comp_apply]
-      rw [hz]
-
-      have hρu : π (G := G) u = π (ρ u) := by
-          exact quotient_ignores_smul (g0 heq) u
-      rw [← hρu, hπ, πinvx.right_inv hu.left.left] at hz
-
-      rw [← hz, φx.left_inv hu.left.right, ← hπ, hρu]
-      apply Set.mem_image_of_mem (⇑ρ) at hu
+      apply f_source_t at hz
+      obtain ⟨u, hu, hz⟩ := hz
+      simp only [f, OpenPartialHomeomorph.coe_trans, Function.comp_apply]
+      rw [← hz, φx.left_inv hu.left.right, ← hπ,
+        quotient_ignores_smul g0 u]
+      apply Set.mem_image_of_mem (smul g0) at hu
       rw [lemma2] at hu
-      rw [hπ, πinvy.right_inv hu.left.left]
+      rw [hπ, ← Homeomorph.smul_apply, πinvy.right_inv hu.left.left]
 
-    have ρ_source := Homeomorph.toOpenPartialHomeomorph_source ρ
-
-    have hfg : OpenPartialHomeomorph.EqOnSource
-        ((φx.symm.trans ((ρ.toOpenPartialHomeomorph (X := M) (Y := M)).trans φy)).restr
-          (s ∩ f.source))
-        (f.restr s)
+    have hfg_t :OpenPartialHomeomorph.EqOnSource
+        ((φx.symm.trans (((smul g0).toOpenPartialHomeomorph (X := M) (Y := M)).trans φy)).restr
+          (t ∩ f.source))
+        (f.restr t)
         := by
-      constructor
+      refine ⟨?_, ?_⟩
       · ext z
-        have s_prop : s = φx '' (Up') := by
-          rw [s_def]
-          have : (πinvx ≫ₕ φx) '' (π '' Up' ∩ π '' Uq') =
-          φx '' (πinvx '' (π '' Up' ∩ π '' Uq')) := by
-            simp only [OpenPartialHomeomorph.coe_trans, Function.comp_apply, Set.image_image]
-          rw [this]
-          rw [lemma3', lemma2']
-          have : π '' (Up') = πinvx.symm '' (Up') := by
-            ext m
-            constructor
-            all_goals intro hm
-            all_goals obtain ⟨n, hn⟩ := hm
-            · use n
-              rw [hπ] at hn
-              exact hn
-            · use n
-              rw [hπ]
-              exact hn
-          rw [this]
-          have : πinvx '' (πinvx.symm '' Up') = Up' := by
-            ext m
-            constructor
-            all_goals intro hm
-            · obtain ⟨n, hn⟩ := hm
-              obtain ⟨l, ⟨hl1, hl2⟩⟩ := hn.left
-              rw [← hl2] at hn
-              rw [πinvx.right_inv hl1.left.left] at hn
-              rw [← hn.right]
-              exact hl1
-            · use πinvx.symm m
-              simp only [Set.mem_image, πinvx.right_inv hm.left.left, and_true]
-              use m
-          rw [this]
+        refine ⟨?_, ?_⟩
+        · intro ⟨hz, hzt⟩
+          rw [IsOpen.interior_eq (IsOpen.inter is_open_t f.open_source)] at hzt
+          rw [OpenPartialHomeomorph.restr_source, IsOpen.interior_eq is_open_t, Set.inter_comm]
+          exact hzt
+        · intro ⟨hzf, hzt⟩
+          rw [IsOpen.interior_eq is_open_t] at hzt
+          obtain ⟨u, hu, hz⟩ := hzt
+          refine ⟨?_, ?_⟩
+          · rw [← hz]
+            refine ⟨φx.map_source' hu.1.2, ?_⟩
+            obtain ⟨u', hu'⟩ := hu.2
+            simp only [OpenPartialHomeomorph.symm_symm,
+              OpenPartialHomeomorph.trans_source,
+              Homeomorph.toOpenPartialHomeomorph_source,
+              Homeomorph.toOpenPartialHomeomorph_apply,
+              Set.univ_inter, Set.mem_preimage]
+            rw [φx.left_inv hu.1.2, ← hu'.2]
+            simp only [Homeomorph.smul_apply, smul_inv_smul]
+            exact hu'.1.2
+          · rw [interior_inter, IsOpen.interior_eq is_open_t,
+              IsOpen.interior_eq f.open_source]
+            refine ⟨?_, hzf⟩
+            use u
+      · intro z ⟨_, hz⟩
+        refine Eq.symm (f_eq_φρφ_t z ?_)
+        rw [interior_inter,IsOpen.interior_eq f.open_source] at hz
+        exact hz.symm
 
-        constructor
-        all_goals intro hz
-        · obtain ⟨hz, hzs⟩ := hz
-          rw [IsOpen.interior_eq (IsOpen.inter is_open_s f.open_source)] at hzs
-          simp only [OpenPartialHomeomorph.restr_toPartialEquiv, IsOpen.interior_eq is_open_s,
-            PartialEquiv.restr_source, Set.mem_inter_iff, hzs.right, hzs.left, and_self]
-
-        · obtain ⟨hz, hzs⟩ := hz
-          simp only [OpenPartialHomeomorph.restr_toPartialEquiv,
-            OpenPartialHomeomorph.trans_toPartialEquiv, OpenPartialHomeomorph.symm_toPartialEquiv,
-            interior_inter, PartialEquiv.restr_source, PartialEquiv.trans_source,
-            PartialEquiv.symm_source, OpenPartialHomeomorph.coe_coe_symm,
-            Homeomorph.toOpenPartialHomeomorph_source, OpenPartialHomeomorph.toFun_eq_coe,
-            Homeomorph.toOpenPartialHomeomorph_apply, Set.univ_inter, Set.mem_inter_iff,
-            Set.mem_preimage, hzs, true_and]
-          rw [IsOpen.interior_eq f.open_source]
-          simp only [hz, and_true]
-          constructor
-          · obtain ⟨hz1, hz2⟩ := hz
-            exact hz1
-          · rw [IsOpen.interior_eq is_open_s] at hzs
-            rw [s_prop] at hzs
-            obtain ⟨r, hr⟩ := hzs
-            rw [← hr.right]
-            rw [φx.left_inv hr.left.left.right]
-            have : ρ r ∈ ρ '' (Up') := by
-              use r
-              exact ⟨hr.left, by rfl⟩
-            rw [lemma2] at this
-            exact this.left.right
-
-      · intro z hz
-        have hz := hz.right
-        have aux : IsOpen (s ∩ f.source) := by
-          refine IsOpen.inter is_open_s f.open_source
-        rw [IsOpen.interior_eq aux] at hz
-        have : z ∈ (f.restr s).source := by
-          constructor
-          · exact hz.right
-          · rw [IsOpen.interior_eq is_open_s]
-            exact hz.left
-        exact Eq.symm (f_eq_φρφ z this)
-
-
-    apply confused_on_how_to_use_this_groupoid (α := H)
-      (f := ((φx.symm.trans ((ρ.toOpenPartialHomeomorph (X := M) (Y := M)).trans φy)).restr
-        (s ∩ f.source)))
-      (g := (f.restr s))
-      (hfg := hfg)
-
-    have my := my_lemma I φx φy ρ.toOpenPartialHomeomorph
-      x.out y.out (by unfold φx; rfl) (by unfold φy; rfl)
-      (E:=E) (𝕜:=𝕜) (n:=n) (by sorry) (by sorry)
+    apply (StructureGroupoid.mem_iff_of_eqOnSource hfg_t).mp
 
     apply closedUnderRestriction'
-    · exact my
+    · exact mem_contDiffGroupoid_of_contMDiff_chartAt
+        I (h:=(smul g0).toOpenPartialHomeomorph)
+        x.out y.out (by sorry) (by sorry)
     · exact TopologicalSpace.isOpen_inter _ _
-        is_open_s f.open_source
-
+        is_open_t f.open_source
 
 -- Once we have done this, let's prove that the projection map is smooth.
 lemma contMDiff_quotientMk : ContMDiff I I n (Quotient.mk _ : M → OrbitSpace M G) := by
