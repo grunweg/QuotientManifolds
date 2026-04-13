@@ -1,5 +1,5 @@
 import Mathlib.Geometry.Manifold.Diffeomorph
-import Mathlib.Topology.Algebra.ProperAction.ProperlyDiscontinuous
+import Mathlib.Topology.Algebra.ProperAction.CompactlyGenerated
 import Mathlib.Topology.IsLocalHomeomorph
 import Mathlib.Topology.Covering.Quotient
 
