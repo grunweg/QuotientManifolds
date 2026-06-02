@@ -54,7 +54,8 @@ variable [IsCancelSMul G M] [T2Space M] [LocallyCompactSpace M]
 -- This follows from mathlib's definition of a properly discontinuous action.
 -- No need to work on this; it's proven in mathlib PR #7596.
 lemma isCoveringMap_quotientMk : IsCoveringMap (Quotient.mk _ : M → OrbitSpace M G) :=
-  IsQuotientCoveringMap.isCoveringMap isQuotientCoveringMap_quotientMk_of_properlyDiscontinuousSMul
+  IsQuotientCoveringMap.isCoveringMap _ G
+    isQuotientCoveringMap_quotientMk_of_properlyDiscontinuousSMul
 
 lemma isLocalHomeomorph : IsLocalHomeomorph (Quotient.mk _ : M → OrbitSpace M G) :=
   isCoveringMap_quotientMk.isLocalHomeomorph
@@ -190,14 +191,12 @@ lemma g0_prop {p p' : M}
     : g0 h • u = u' := by exact Classical.choose_spec (lemma1 h)
 
 -- TO-DO: write this with the proper variables and hypothesis for G and M
-omit [ProperlyDiscontinuousSMul G M] [IsCancelSMul G M]
-[T2Space M] [LocallyCompactSpace M] in
+omit [ProperlyDiscontinuousSMul G M] [IsCancelSMul G M] [T2Space M] [LocallyCompactSpace M] in
 lemma Homeomorph.smul_symm {g : G} :
   (Homeomorph.smul g (α := M)).symm = (Homeomorph.smul g⁻¹) := by
   exact Homeomorph.ext_iff.mpr (congrFun rfl)
 
-omit [ProperlyDiscontinuousSMul G M] [IsCancelSMul G M]
-[T2Space M] [LocallyCompactSpace M] in
+omit [ProperlyDiscontinuousSMul G M] [IsCancelSMul G M] [T2Space M] [LocallyCompactSpace M] in
 lemma Homeomorph.smul_image_inter_preimage
     (g : G)
     (U : Set M)
@@ -221,7 +220,7 @@ lemma lemma2 {p p' : M}
 def π : M → OrbitSpace M G := fun p ↦ Quotient.mk _ p
 
 omit [TopologicalSpace M] [ProperlyDiscontinuousSMul G M]
-[ContinuousConstSMul G M] [IsCancelSMul G M] in
+  [ContinuousConstSMul G M] [IsCancelSMul G M] in
 /--
 Applying the projection function to two elements that are
 related via the relation yields the same result, namely
