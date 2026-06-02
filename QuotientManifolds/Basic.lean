@@ -250,8 +250,12 @@ instance : IsManifold I n (OrbitSpace M G) where
     set Up := πinvx.target ∩ φx.source -- U H x
     set Uq := πinvy.target ∩ φy.source -- U H y
 
-    have heq : (Quotient.mk _ : M → OrbitSpace M G) (φx.symm h) =
-      Quotient.mk _ (πinvy (πinvx.symm (φx.symm h))) := by sorry
+    have heq : πinvx.symm (φx.symm h) = πinvy.symm (πinvy (πinvx.symm (φx.symm h))) := by
+      rw [OpenPartialHomeomorph.left_inv]
+      exact hh3
+    have heq : (⟦φx.symm h⟧ : OrbitSpace M G) = ⟦πinvy (πinvx.symm (φx.symm h))⟧ := by
+      nth_rw 1 [← aux_eq G x.out, ← aux_eq G y.out]
+      exact heq
 
     obtain ⟨g0, hg0⟩ := MulAction.orbitRel_apply.mp (Quotient.exact heq.symm)
     simp only at hg0
