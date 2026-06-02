@@ -212,6 +212,14 @@ lemma lemma2 {u u' : M}
   nth_rw 2 [Set.inter_comm]
   exact Homeomorph.smul_image_inter_preimage (g0 h) U U'
 
+omit [ProperlyDiscontinuousSMul G M] [IsCancelSMul G M] [T2Space M] [LocallyCompactSpace M] in
+lemma lemma2' (g : G) (U : Set M)
+    (U' : Set M) : Homeomorph.smul (α := M) g '' (U ∩ (Homeomorph.smul g⁻¹ '' U'))
+      = U' ∩ (Homeomorph.smul g '' U) := by
+  nth_rw 2 [Set.inter_comm]
+  rw [← Homeomorph.smul_symm, Homeomorph.image_symm]
+  exact Set.image_inter_preimage (⇑(Homeomorph.smul g)) U U'
+
 -- to-do: delete this and just use ⟦ ⟧?
 def π : M → OrbitSpace M G := fun p ↦ Quotient.mk _ p
 
@@ -296,7 +304,10 @@ instance : IsManifold I n (OrbitSpace M G) where
     have heq : (Quotient.mk _ : M → OrbitSpace M G) (φx.symm h) =
       Quotient.mk _ (πinvy (πinvx.symm (φx.symm h))) := by sorry
 
-    set g0 := g0 heq
+    obtain ⟨g0, hg0⟩ := MulAction.orbitRel_apply.mp (Quotient.exact heq.symm)
+    simp at hg0
+
+    --set g0 := g0 heq
     set Up' := Up ∩ smul g0⁻¹ '' Uq
 
     set t := φx '' (Up')
@@ -324,8 +335,7 @@ instance : IsManifold I n (OrbitSpace M G) where
         use πinvy (πinvx.symm (φx.symm h))
         refine ⟨⟨OpenPartialHomeomorph.map_source πinvy hh3, hh4⟩, ?_⟩
         apply (smul g0).injective
-        simp only [Homeomorph.smul_apply, smul_inv_smul]
-        rw [g0_prop heq]
+        simp only [Homeomorph.smul_apply, smul_inv_smul, hg0]
       · rw [OpenPartialHomeomorph.right_inv φx hh1]
 
     refine ⟨t, is_open_t, h_in_t, ?_⟩
@@ -346,7 +356,7 @@ instance : IsManifold I n (OrbitSpace M G) where
       rw [← hz, φx.left_inv hu.left.right, ← hπ,
         quotient_ignores_smul g0 u]
       apply Set.mem_image_of_mem (smul g0) at hu
-      rw [lemma2] at hu
+      rw [lemma2' _ _ _] at hu
       rw [hπ, ← Homeomorph.smul_apply, πinvy.right_inv hu.left.left]
 
     have hfg_t :OpenPartialHomeomorph.EqOnSource
