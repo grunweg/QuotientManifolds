@@ -215,6 +215,12 @@ lemma mem_contDiffGroupoid_of_contMDiff_chartAt
       Set.inter_univ]
     refine ⟨⟨hv.2, hv.1.1.1⟩, hv.1.2⟩
 
+lemma π_prop (u : M) (z : OrbitSpace M G) :
+    π u = (localInverseAt G (Quotient.out z)).symm u := by
+  change π u = (aux G z.out) u
+  rw [aux_eq]
+  rfl
+
 open Homeomorph -- maybe its not the best but it allows me to write smul
 
 -- And let's prove that it's a manifold.
@@ -224,17 +230,9 @@ instance : IsManifold I n (OrbitSpace M G) where
 
     unfold myChartAt
 
-    -- this should go outside as a lemma for local inverse or something
-    have hπ : ∀ {u : M} {z : OrbitSpace M G},
-        π u = (localInverseAt G (Quotient.out z)).symm u := by
-      intro u z
-      change π u = (aux G z.out) u
-      rw [aux_eq]
-      rfl
-
     --- renaming
-    set φy := chartAt H (Quotient.out y) with hϕy
-    set φx := chartAt H (Quotient.out x) with hϕx
+    set φy := chartAt H (Quotient.out y)
+    set φx := chartAt H (Quotient.out x)
     set πinvx := localInverseAt G (Quotient.out x)
     set πinvy := localInverseAt G (Quotient.out y)
 
@@ -266,51 +264,41 @@ instance : IsManifold I n (OrbitSpace M G) where
     set t := φx '' (Up')
 
     have is_open_Up' : IsOpen Up' := by
-      apply TopologicalSpace.isOpen_inter
-      · apply TopologicalSpace.isOpen_inter
-        · apply OpenPartialHomeomorph.open_target
-        · apply OpenPartialHomeomorph.open_source
+      refine TopologicalSpace.isOpen_inter _ _ ?_ ?_
+      · refine TopologicalSpace.isOpen_inter _ _ (OpenPartialHomeomorph.open_target _)
+          (OpenPartialHomeomorph.open_source _)
       · change IsOpen (smul g0⁻¹ '' Uq) -- why is this needed?
         rw [Homeomorph.isOpen_image]
-        apply TopologicalSpace.isOpen_inter
-        · apply OpenPartialHomeomorph.open_target
-        · apply OpenPartialHomeomorph.open_source
+        refine TopologicalSpace.isOpen_inter _ _ (OpenPartialHomeomorph.open_target _)
+          (OpenPartialHomeomorph.open_source _)
 
     have is_open_t : IsOpen t :=
-      OpenPartialHomeomorph.isOpen_image_of_subset_source _
-        is_open_Up'
+      OpenPartialHomeomorph.isOpen_image_of_subset_source _ is_open_Up'
         (Set.Subset.trans Set.inter_subset_left Set.inter_subset_right)
 
     have h_in_t : h ∈ t := by
-      use φx.symm h
-      refine ⟨?_, ?_⟩
-      · refine ⟨⟨hh2, OpenPartialHomeomorph.map_target φx hh1⟩, ?_⟩
-        use πinvy (πinvx.symm (φx.symm h))
-        refine ⟨⟨OpenPartialHomeomorph.map_source πinvy hh3, hh4⟩, ?_⟩
-        apply (smul g0).injective
-        simp only [Homeomorph.smul_apply, smul_inv_smul, hg0]
-      · rw [OpenPartialHomeomorph.right_inv φx hh1]
+      refine ⟨φx.symm h, ?_, OpenPartialHomeomorph.right_inv φx hh1⟩
+      refine ⟨⟨hh2, OpenPartialHomeomorph.map_target φx hh1⟩, ?_⟩
+      use πinvy (πinvx.symm (φx.symm h))
+      refine ⟨⟨OpenPartialHomeomorph.map_source πinvy hh3, hh4⟩, ((smul g0).injective ?_)⟩
+      simp only [Homeomorph.smul_apply, smul_inv_smul, hg0]
 
     refine ⟨t, is_open_t, h_in_t, ?_⟩
 
     set f := (φx.symm ≫ₕ (πinvx.symm ≫ₕ πinvy) ≫ₕ φy)
 
     have f_source_t : (f.restr t).source ⊆ t := by
-      rw [OpenPartialHomeomorph.restr_source]
-      rw [IsOpen.interior_eq is_open_t]
+      rw [OpenPartialHomeomorph.restr_source, IsOpen.interior_eq is_open_t]
       exact Set.inter_subset_right
 
-    have f_eq_φρφ_t :
-        ∀ x ∈ (f.restr t).source, f x = φy (smul g0 (φx.symm x)) := by
+    have f_eq_φρφ_t : ∀ x ∈ (f.restr t).source, f x = φy (smul g0 (φx.symm x)) := by
       intro z hz
-      apply f_source_t at hz
-      obtain ⟨u, hu, hz⟩ := hz
+      obtain ⟨u, hu, hz⟩ := f_source_t hz
       simp only [f, OpenPartialHomeomorph.coe_trans, Function.comp_apply]
-      rw [← hz, φx.left_inv hu.left.right, ← hπ,
-        quotient_ignores_smul g0 u]
+      rw [← hz, φx.left_inv hu.left.right, ← π_prop, quotient_ignores_smul g0 u]
       apply Set.mem_image_of_mem (smul g0) at hu
       rw [lemma2' _ _ _] at hu
-      rw [hπ, ← Homeomorph.smul_apply, πinvy.right_inv hu.left.left]
+      rw [π_prop, ← Homeomorph.smul_apply, πinvy.right_inv hu.left.left]
 
     have hfg_t :OpenPartialHomeomorph.EqOnSource
         ((φx.symm.trans (((smul g0).toOpenPartialHomeomorph (X := M) (Y := M)).trans φy)).restr
