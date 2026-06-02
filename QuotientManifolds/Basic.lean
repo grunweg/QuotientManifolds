@@ -155,58 +155,36 @@ instance : ChartedSpace H (OrbitSpace M G) where
         EVERYTHING AFTER THIS NEEDS TO BE CLEANED UP
 -/
 
-
-/--
-If two elements are such that `p u = π_p' u'`,
-then they are related by `u' = g • u` for some `g ∈ G`.
--/
-lemma lemma1
-    {p p' : M}
-    {u u' : M}
-    (h : (aux G p) u = (aux G p') u')
-    : u' ∈ MulAction.orbit G u := by
-  refine MulAction.orbitRel_apply.mp ?_
-  refine Quotient.exact ?_
-  rw [aux_eq G p, aux_eq G p'] at h
-  exact h.symm
------ TODO: re escribir esto; simplemente esto es cierto si π u = π u'; es más sencillo usarlo asi
 omit [TopologicalSpace M] [ProperlyDiscontinuousSMul G M] [ContinuousConstSMul G M]
   [IsCancelSMul G M] [T2Space M] [LocallyCompactSpace M] in
-lemma lemma1' {u u' : M}
-    (h : (Quotient.mk _ : M → OrbitSpace M G) u = Quotient.mk _ u') :
+/--
+If two elements are such that `⟦u⟧ = ⟦u'⟧`,
+then they are related by `u' = g • u` for some `g ∈ G`.
+-/
+lemma lemma1 {u u' : M}
+    (h : (⟦u⟧ : OrbitSpace M G) = ⟦u'⟧) :
     u' ∈ MulAction.orbit G u :=
   MulAction.orbitRel_apply.mp (Quotient.exact h.symm)
 
 /--
-If two elements are such that `p u = π_p' u'`,
+If two elements are such that `⟦u⟧ = ⟦u'⟧`,
 then they are related by `u' = g • u` for some `g ∈ G`.
-`g0` is such `g`.
+`g0` is one such `g`.
 -/
-def g0 {p p' : M} -- this gives us the g0 that the paper talks about
-    {u u' : M}
-    (h : (aux G p) u = (aux G p') u') : G :=
+def g0 {u u' : M}
+    (h : (⟦u⟧ : OrbitSpace M G) = ⟦u'⟧) : G :=
   Classical.choose (lemma1 h)
-
-def g0' {u u' : M}
-    (h : (Quotient.mk _ : M → OrbitSpace M G) u = Quotient.mk _ u') : G :=
-  Classical.choose (lemma1' h)
-
-
-/--
-If two elements are such that `p u = π_p' u'`,
-then they are related by `u' = g • u` for some `g ∈ G`.
-If `g0` is chosen to be such `g`, then `u' = g0 • u`.
--/
-lemma g0_prop {p p' : M}
-    {u u' : M}
-    (h : (aux G p) u = (aux G p') u')
-    : g0 h • u = u' := by exact Classical.choose_spec (lemma1 h)
 
 omit [TopologicalSpace M] [ProperlyDiscontinuousSMul G M] [ContinuousConstSMul G M]
   [IsCancelSMul G M] [T2Space M] [LocallyCompactSpace M] in
-lemma g0_prop' {u u' : M}
-    (h : (Quotient.mk _ : M → OrbitSpace M G) u = Quotient.mk _ u')
-    : g0' h • u = u' := by exact Classical.choose_spec (lemma1' h)
+/--
+If two elements are such that `⟦u⟧ = ⟦u'⟧`,
+then they are related by `u' = g • u` for some `g ∈ G`.
+If `g0` is chosen to be such `g`, then `u' = g0 • u`.
+-/
+lemma g0_prop {u u' : M}
+    (h : (⟦u⟧ : OrbitSpace M G) = ⟦u'⟧)
+    : g0 h • u = u' := by exact Classical.choose_spec (lemma1 h)
 
 -- TO-DO: write this with the proper variables and hypothesis for G and M
 omit [ProperlyDiscontinuousSMul G M] [IsCancelSMul G M] [T2Space M] [LocallyCompactSpace M] in
@@ -224,25 +202,15 @@ lemma Homeomorph.smul_image_inter_preimage
   rw [← Homeomorph.smul_symm, Homeomorph.image_symm]
   exact Set.image_inter_preimage (⇑(Homeomorph.smul g)) U U'
 
-lemma lemma2 {p p' : M}
-    {u u' : M}
-    (h : (aux G p) u = (aux G p') u')
+omit [ProperlyDiscontinuousSMul G M] [IsCancelSMul G M] [T2Space M] [LocallyCompactSpace M] in
+lemma lemma2 {u u' : M}
+    (h : (⟦u⟧ : OrbitSpace M G) = ⟦u'⟧)
     (U : Set M)
     (U' : Set M)
-    : Homeomorph.smul (g0 h) '' (U ∩ (Homeomorph.smul (g0 h)⁻¹ '' U'))
+    : Homeomorph.smul (α := M) (g0 h) '' (U ∩ (Homeomorph.smul (g0 h)⁻¹ '' U'))
       = U' ∩ (Homeomorph.smul (g0 h) '' U) := by
   nth_rw 2 [Set.inter_comm]
   exact Homeomorph.smul_image_inter_preimage (g0 h) U U'
-
-omit [ProperlyDiscontinuousSMul G M] [IsCancelSMul G M] [T2Space M] [LocallyCompactSpace M] in
-lemma lemma2' {u u' : M}
-    (h : (Quotient.mk _ : M → OrbitSpace M G) u = Quotient.mk _ u')
-    (U : Set M)
-    (U' : Set M)
-    : Homeomorph.smul (α := M) (g0' h) '' (U ∩ (Homeomorph.smul (g0' h)⁻¹ '' U'))
-      = U' ∩ (Homeomorph.smul (g0' h) '' U) := by
-  nth_rw 2 [Set.inter_comm]
-  exact Homeomorph.smul_image_inter_preimage (g0' h) U U'
 
 -- to-do: delete this and just use ⟦ ⟧?
 def π : M → OrbitSpace M G := fun p ↦ Quotient.mk _ p
@@ -325,14 +293,10 @@ instance : IsManifold I n (OrbitSpace M G) where
     set Up := πinvx.target ∩ φx.source -- U H x
     set Uq := πinvy.target ∩ φy.source -- U H y
 
-    have heq : πinvx.symm (φx.symm h) = πinvy.symm (πinvy (πinvx.symm (φx.symm h))) := by
-      rw [OpenPartialHomeomorph.left_inv]
-      exact hh3
-
-    have heq' : (Quotient.mk _ : M → OrbitSpace M G) (φx.symm h) =
+    have heq : (Quotient.mk _ : M → OrbitSpace M G) (φx.symm h) =
       Quotient.mk _ (πinvy (πinvx.symm (φx.symm h))) := by sorry
 
-    set g0 := g0' heq'
+    set g0 := g0 heq
     set Up' := Up ∩ smul g0⁻¹ '' Uq
 
     set t := φx '' (Up')
@@ -361,7 +325,7 @@ instance : IsManifold I n (OrbitSpace M G) where
         refine ⟨⟨OpenPartialHomeomorph.map_source πinvy hh3, hh4⟩, ?_⟩
         apply (smul g0).injective
         simp only [Homeomorph.smul_apply, smul_inv_smul]
-        rw [g0_prop' heq']
+        rw [g0_prop heq]
       · rw [OpenPartialHomeomorph.right_inv φx hh1]
 
     refine ⟨t, is_open_t, h_in_t, ?_⟩
@@ -382,7 +346,7 @@ instance : IsManifold I n (OrbitSpace M G) where
       rw [← hz, φx.left_inv hu.left.right, ← hπ,
         quotient_ignores_smul g0 u]
       apply Set.mem_image_of_mem (smul g0) at hu
-      rw [lemma2'] at hu
+      rw [lemma2] at hu
       rw [hπ, ← Homeomorph.smul_apply, πinvy.right_inv hu.left.left]
 
     have hfg_t :OpenPartialHomeomorph.EqOnSource
