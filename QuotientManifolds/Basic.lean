@@ -258,7 +258,6 @@ instance : IsManifold I n (OrbitSpace M G) where
     obtain ⟨g0, hg0⟩ := MulAction.orbitRel_apply.mp (Quotient.exact heq.symm)
     simp only at hg0
 
-    --set g0 := g0 heq
     set Up' := Up ∩ smul g0⁻¹ '' Uq
 
     set t := φx '' (Up')
@@ -319,18 +318,14 @@ instance : IsManifold I n (OrbitSpace M G) where
           · rw [← hz]
             refine ⟨φx.map_source' hu.1.2, ?_⟩
             obtain ⟨u', hu'⟩ := hu.2
-            simp only [OpenPartialHomeomorph.symm_symm,
-              OpenPartialHomeomorph.trans_source,
-              Homeomorph.toOpenPartialHomeomorph_source,
-              Homeomorph.toOpenPartialHomeomorph_apply,
+            simp only [OpenPartialHomeomorph.symm_symm, OpenPartialHomeomorph.trans_source,
+              Homeomorph.toOpenPartialHomeomorph_source, Homeomorph.toOpenPartialHomeomorph_apply,
               Set.univ_inter, Set.mem_preimage]
             rw [φx.left_inv hu.1.2, ← hu'.2]
             simp only [Homeomorph.smul_apply, smul_inv_smul]
             exact hu'.1.2
-          · rw [interior_inter, IsOpen.interior_eq is_open_t,
-              IsOpen.interior_eq f.open_source]
-            refine ⟨?_, hzf⟩
-            use u
+          · rw [interior_inter, IsOpen.interior_eq is_open_t, IsOpen.interior_eq f.open_source]
+            refine ⟨⟨u, by trivial⟩, hzf⟩
       · intro z ⟨_, hz⟩
         refine Eq.symm (f_eq_φρφ_t z ?_)
         rw [interior_inter,IsOpen.interior_eq f.open_source] at hz
