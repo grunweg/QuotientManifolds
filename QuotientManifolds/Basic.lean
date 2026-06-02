@@ -155,62 +155,11 @@ instance : ChartedSpace H (OrbitSpace M G) where
         EVERYTHING AFTER THIS NEEDS TO BE CLEANED UP
 -/
 
-omit [TopologicalSpace M] [ProperlyDiscontinuousSMul G M] [ContinuousConstSMul G M]
-  [IsCancelSMul G M] [T2Space M] [LocallyCompactSpace M] in
-/--
-If two elements are such that `⟦u⟧ = ⟦u'⟧`,
-then they are related by `u' = g • u` for some `g ∈ G`.
--/
-lemma lemma1 {u u' : M}
-    (h : (⟦u⟧ : OrbitSpace M G) = ⟦u'⟧) :
-    u' ∈ MulAction.orbit G u :=
-  MulAction.orbitRel_apply.mp (Quotient.exact h.symm)
-
-/--
-If two elements are such that `⟦u⟧ = ⟦u'⟧`,
-then they are related by `u' = g • u` for some `g ∈ G`.
-`g0` is one such `g`.
--/
-def g0 {u u' : M}
-    (h : (⟦u⟧ : OrbitSpace M G) = ⟦u'⟧) : G :=
-  Classical.choose (lemma1 h)
-
-omit [TopologicalSpace M] [ProperlyDiscontinuousSMul G M] [ContinuousConstSMul G M]
-  [IsCancelSMul G M] [T2Space M] [LocallyCompactSpace M] in
-/--
-If two elements are such that `⟦u⟧ = ⟦u'⟧`,
-then they are related by `u' = g • u` for some `g ∈ G`.
-If `g0` is chosen to be such `g`, then `u' = g0 • u`.
--/
-lemma g0_prop {u u' : M}
-    (h : (⟦u⟧ : OrbitSpace M G) = ⟦u'⟧)
-    : g0 h • u = u' := by exact Classical.choose_spec (lemma1 h)
-
 -- TO-DO: write this with the proper variables and hypothesis for G and M
 omit [ProperlyDiscontinuousSMul G M] [IsCancelSMul G M] [T2Space M] [LocallyCompactSpace M] in
 lemma Homeomorph.smul_symm {g : G} :
   (Homeomorph.smul g (α := M)).symm = (Homeomorph.smul g⁻¹) := by
   exact Homeomorph.ext_iff.mpr (congrFun rfl)
-
-omit [ProperlyDiscontinuousSMul G M] [IsCancelSMul G M] [T2Space M] [LocallyCompactSpace M] in
-lemma Homeomorph.smul_image_inter_preimage
-    (g : G)
-    (U : Set M)
-    (U' : Set M)
-    : Homeomorph.smul g '' (U ∩ (Homeomorph.smul g⁻¹ '' U'))
-      = (Homeomorph.smul g '' U) ∩ U' := by
-  rw [← Homeomorph.smul_symm, Homeomorph.image_symm]
-  exact Set.image_inter_preimage (⇑(Homeomorph.smul g)) U U'
-
-omit [ProperlyDiscontinuousSMul G M] [IsCancelSMul G M] [T2Space M] [LocallyCompactSpace M] in
-lemma lemma2 {u u' : M}
-    (h : (⟦u⟧ : OrbitSpace M G) = ⟦u'⟧)
-    (U : Set M)
-    (U' : Set M)
-    : Homeomorph.smul (α := M) (g0 h) '' (U ∩ (Homeomorph.smul (g0 h)⁻¹ '' U'))
-      = U' ∩ (Homeomorph.smul (g0 h) '' U) := by
-  nth_rw 2 [Set.inter_comm]
-  exact Homeomorph.smul_image_inter_preimage (g0 h) U U'
 
 omit [ProperlyDiscontinuousSMul G M] [IsCancelSMul G M] [T2Space M] [LocallyCompactSpace M] in
 lemma lemma2' (g : G) (U : Set M)
@@ -305,7 +254,7 @@ instance : IsManifold I n (OrbitSpace M G) where
       Quotient.mk _ (πinvy (πinvx.symm (φx.symm h))) := by sorry
 
     obtain ⟨g0, hg0⟩ := MulAction.orbitRel_apply.mp (Quotient.exact heq.symm)
-    simp at hg0
+    simp only at hg0
 
     --set g0 := g0 heq
     set Up' := Up ∩ smul g0⁻¹ '' Uq
