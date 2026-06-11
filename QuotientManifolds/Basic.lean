@@ -180,11 +180,14 @@ omit [TopologicalSpace M] [ProperlyDiscontinuousSMul G M] [ContinuousConstSMul G
 Applying the projection function to two elements that are
 related via the relation yields the same result, namely
 `⟦u⟧ = ⟦g • u⟧`.
+
+I think this is just better API than Quotient.eq as is??
 -/
 lemma quotient_ignores_smul (g : G) (u : M) :
     (⟦u⟧ : OrbitSpace M G) = ⟦g • u⟧ :=
   Quotient.eq.mpr ⟨g⁻¹, (by exact inv_smul_smul g u)⟩
 
+-- is this obvious??? or proved somewhere else with a similar statement?
 lemma mem_contDiffGroupoid_of_contMDiff_chartAt (x y : M) {h : OpenPartialHomeomorph M M}
     (hh : ContMDiff I I n h) (hhsymm : ContMDiff I I n h.symm) :
     (chartAt H x).symm ≫ₕ h ≫ₕ (chartAt H y) ∈ (contDiffGroupoid (↑n) I) := by
@@ -196,6 +199,7 @@ lemma mem_contDiffGroupoid_of_contMDiff_chartAt (x y : M) {h : OpenPartialHomeom
 
 variable [IsCancelSMul G M] [T2Space M] [LocallyCompactSpace M]
 
+-- i think this is localInverseAt_symm
 lemma π_prop (u x : M) :
     ⟦u⟧ = (localInverseAt G x).symm u := by
   change ⟦u⟧ = (aux G x) u
