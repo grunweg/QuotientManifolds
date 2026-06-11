@@ -196,9 +196,9 @@ lemma mem_contDiffGroupoid_of_contMDiff_chartAt (x y : M) {h : OpenPartialHomeom
 
 variable [IsCancelSMul G M] [T2Space M] [LocallyCompactSpace M]
 
-lemma π_prop (u : M) (z : OrbitSpace M G) :
-    ⟦u⟧ = (localInverseAt G (Quotient.out z)).symm u := by
-  change ⟦u⟧ = (aux G z.out) u
+lemma π_prop (u x : M) :
+    ⟦u⟧ = (localInverseAt G x).symm u := by
+  change ⟦u⟧ = (aux G x) u
   simp [aux_eq]
 
 open Homeomorph -- maybe its not the best but it allows me to write smul
