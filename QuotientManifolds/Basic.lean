@@ -162,7 +162,7 @@ end ChartedSpace
 variable [ContinuousConstSMul G M]
 
 omit [ProperlyDiscontinuousSMul G M] in
--- TO-DO: write this with the proper variables and hypothesis for G and M
+-- question: is this needed?
 lemma Homeomorph.smul_symm {g : G} :
     (Homeomorph.smul g (α := M)).symm = (Homeomorph.smul g⁻¹) :=
   Homeomorph.ext_iff.mpr (congrFun rfl)
