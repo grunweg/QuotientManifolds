@@ -132,6 +132,8 @@ end prerequisites
 
 -- Let's define a charted space structure on the quotient.
 
+section ChartedSpace
+
 variable [ContinuousConstSMul G M] [IsCancelSMul G M] [T2Space M] [LocallyCompactSpace M]
 
 noncomputable def myChartAt (q : OrbitSpace M G) : OpenPartialHomeomorph (OrbitSpace M G) H :=
@@ -150,20 +152,23 @@ instance : ChartedSpace H (OrbitSpace M G) where
     exact ⟨quotientMk_mem_localInverseAt_source G, mem_chart_source H p⟩
   chart_mem_atlas := by simp
 
+end ChartedSpace
+
 
 /-
         EVERYTHING AFTER THIS NEEDS TO BE CLEANED UP
 -/
 
--- TO-DO: write this with the proper variables and hypothesis for G and M
-omit [ProperlyDiscontinuousSMul G M] [IsCancelSMul G M] [T2Space M] [LocallyCompactSpace M] in
-lemma Homeomorph.smul_symm {g : G} :
-  (Homeomorph.smul g (α := M)).symm = (Homeomorph.smul g⁻¹) := by
-  exact Homeomorph.ext_iff.mpr (congrFun rfl)
+variable [ContinuousConstSMul G M]
 
-omit [ProperlyDiscontinuousSMul G M] [IsCancelSMul G M] [T2Space M] [LocallyCompactSpace M] in
-lemma lemma2' (g : G) (U : Set M)
-    (U' : Set M) : Homeomorph.smul (α := M) g '' (U ∩ (Homeomorph.smul g⁻¹ '' U'))
+omit [ProperlyDiscontinuousSMul G M] in
+-- TO-DO: write this with the proper variables and hypothesis for G and M
+lemma Homeomorph.smul_symm {g : G} :
+    (Homeomorph.smul g (α := M)).symm = (Homeomorph.smul g⁻¹) :=
+  Homeomorph.ext_iff.mpr (congrFun rfl)
+
+lemma lemma2 (g : G) (U : Set M) (U' : Set M) :
+    Homeomorph.smul (α := M) g '' (U ∩ (Homeomorph.smul g⁻¹ '' U'))
       = U' ∩ (Homeomorph.smul g '' U) := by
   nth_rw 2 [Set.inter_comm]
   rw [← Homeomorph.smul_symm, Homeomorph.image_symm]
@@ -172,54 +177,31 @@ lemma lemma2' (g : G) (U : Set M)
 -- to-do: delete this and just use ⟦ ⟧?
 def π : M → OrbitSpace M G := fun p ↦ Quotient.mk _ p
 
-omit [TopologicalSpace M] [ProperlyDiscontinuousSMul G M]
-  [ContinuousConstSMul G M] [IsCancelSMul G M] in
+omit [TopologicalSpace M] [ProperlyDiscontinuousSMul G M] [ContinuousConstSMul G M] in
 /--
 Applying the projection function to two elements that are
 related via the relation yields the same result, namely
 `π u = π (g • u)`.
 -/
 lemma quotient_ignores_smul (g : G) (u : M) :
-    π (G := G) u = π (g • u) := by
-  exact Quotient.eq.mpr ⟨g⁻¹, (by exact inv_smul_smul g u)⟩
+    π (G := G) u = π (g • u) :=
+  Quotient.eq.mpr ⟨g⁻¹, (by exact inv_smul_smul g u)⟩
 
-omit [T2Space M] [LocallyCompactSpace M] in
-lemma mem_contDiffGroupoid_of_contMDiff_chartAt
-    (x y : M) {h : OpenPartialHomeomorph M M}
-    (hh : ContMDiff I I n h)
-    (hhsymm : ContMDiff I I n h.symm)
-    :
+lemma mem_contDiffGroupoid_of_contMDiff_chartAt (x y : M) {h : OpenPartialHomeomorph M M}
+    (hh : ContMDiff I I n h) (hhsymm : ContMDiff I I n h.symm) :
     (chartAt H x).symm ≫ₕ h ≫ₕ (chartAt H y) ∈ (contDiffGroupoid (↑n) I) := by
-  rw [contMDiff_iff] at hh hhsymm
-  obtain hh := hh.2 x y
-  obtain hhsymm := hhsymm.2 y x
-  set f := (chartAt H x).symm ≫ₕ h ≫ₕ (chartAt H y)
-  apply mem_groupoid_of_pregroupoid.mpr
-  constructor
-  · refine hh.mono ?_
-    intro v hv
-    simp only [extChartAt, OpenPartialHomeomorph.extend,
-      PartialEquiv.trans_target, ModelWithCorners.target_eq,
-      ModelWithCorners.toPartialEquiv_coe_symm,
-      PartialEquiv.coe_trans_symm, PartialEquiv.trans_source,
-      ModelWithCorners.source_eq, Set.preimage_univ,
-      Set.inter_univ] -- should this just be simp
-    refine ⟨⟨hv.2, hv.1.1⟩, hv.1.2.2⟩
-  · refine hhsymm.mono ?_
-    intro v hv
-    simp only [extChartAt, OpenPartialHomeomorph.extend,
-      PartialEquiv.trans_target, ModelWithCorners.target_eq,
-      ModelWithCorners.toPartialEquiv_coe_symm,
-      PartialEquiv.coe_trans_symm, PartialEquiv.trans_source,
-      ModelWithCorners.source_eq, Set.preimage_univ,
-      Set.inter_univ]
-    refine ⟨⟨hv.2, hv.1.1.1⟩, hv.1.2⟩
+  refine mem_groupoid_of_pregroupoid.mpr ⟨?_, ?_⟩
+  · refine ((contMDiff_iff.mp hh).2 x y).mono (fun v hv ↦ ?_)
+    simpa using ⟨⟨hv.2, hv.1.1⟩, hv.1.2.2⟩
+  · refine ((contMDiff_iff.mp hhsymm).2 y x).mono (fun v hv ↦ ?_)
+    simpa using ⟨⟨hv.2, hv.1.1.1⟩, hv.1.2⟩
+
+variable [IsCancelSMul G M] [T2Space M] [LocallyCompactSpace M]
 
 lemma π_prop (u : M) (z : OrbitSpace M G) :
     π u = (localInverseAt G (Quotient.out z)).symm u := by
   change π u = (aux G z.out) u
-  rw [aux_eq]
-  rfl
+  simp [aux_eq, π]
 
 open Homeomorph -- maybe its not the best but it allows me to write smul
 
@@ -296,7 +278,7 @@ instance : IsManifold I n (OrbitSpace M G) where
       simp only [f, OpenPartialHomeomorph.coe_trans, Function.comp_apply]
       rw [← hz, φx.left_inv hu.left.right, ← π_prop, quotient_ignores_smul g0 u]
       apply Set.mem_image_of_mem (smul g0) at hu
-      rw [lemma2' _ _ _] at hu
+      rw [lemma2 _ _ _] at hu
       rw [π_prop, ← Homeomorph.smul_apply, πinvy.right_inv hu.left.left]
 
     have hfg_t :OpenPartialHomeomorph.EqOnSource
