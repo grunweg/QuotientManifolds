@@ -174,17 +174,15 @@ lemma lemma2 (g : G) (U : Set M) (U' : Set M) :
   rw [← Homeomorph.smul_symm, Homeomorph.image_symm]
   exact Set.image_inter_preimage (⇑(Homeomorph.smul g)) U U'
 
--- to-do: delete this and just use ⟦ ⟧?
-def π : M → OrbitSpace M G := fun p ↦ Quotient.mk _ p
 
 omit [TopologicalSpace M] [ProperlyDiscontinuousSMul G M] [ContinuousConstSMul G M] in
 /--
 Applying the projection function to two elements that are
 related via the relation yields the same result, namely
-`π u = π (g • u)`.
+`⟦u⟧ = ⟦g • u⟧`.
 -/
 lemma quotient_ignores_smul (g : G) (u : M) :
-    π (G := G) u = π (g • u) :=
+    (⟦u⟧ : OrbitSpace M G) = ⟦g • u⟧ :=
   Quotient.eq.mpr ⟨g⁻¹, (by exact inv_smul_smul g u)⟩
 
 lemma mem_contDiffGroupoid_of_contMDiff_chartAt (x y : M) {h : OpenPartialHomeomorph M M}
@@ -199,9 +197,9 @@ lemma mem_contDiffGroupoid_of_contMDiff_chartAt (x y : M) {h : OpenPartialHomeom
 variable [IsCancelSMul G M] [T2Space M] [LocallyCompactSpace M]
 
 lemma π_prop (u : M) (z : OrbitSpace M G) :
-    π u = (localInverseAt G (Quotient.out z)).symm u := by
-  change π u = (aux G z.out) u
-  simp [aux_eq, π]
+    ⟦u⟧ = (localInverseAt G (Quotient.out z)).symm u := by
+  change ⟦u⟧ = (aux G z.out) u
+  simp [aux_eq]
 
 open Homeomorph -- maybe its not the best but it allows me to write smul
 
